@@ -31,7 +31,7 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/Graph.js b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 old mode 100644
 new mode 100755
-index 28d6456..c61aac3
+index 28d6456..25c56a9
 --- a/node_modules/react-d3-graph/lib/components/graph/Graph.js
 +++ b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 @@ -355,6 +355,8 @@ var Graph = function (_React$Component) {
@@ -43,13 +43,22 @@ index 28d6456..c61aac3
              _this.pauseSimulation();
              if (_this.state.enableFocusAnimation) {
                  _this.setState({ enableFocusAnimation: false });
-@@ -423,23 +425,49 @@ var Graph = function (_React$Component) {
+@@ -398,6 +400,9 @@ var Graph = function (_React$Component) {
+             if (tagName.toUpperCase() === "SVG" && name === "svg-container-" + _this.state.id) {
+                 _this.props.onClickGraph && _this.props.onClickGraph();
+             }
++
++            // TODO - clear edge highlighting
++            _this.state.highlightedLink = undefined;
+         };
+ 
+         _this.onClickNode = function (clickedNodeId) {
+@@ -423,23 +428,48 @@ var Graph = function (_React$Component) {
                      _this.nodeClickTimer = clearTimeout(_this.nodeClickTimer);
                  }
              }
 +
 +            _this.props.selectNode(clickedNodeId);
-+            // _this.state.config.nodeHighlightBehavior && _this._setNodeHighlightedValue(clickedNodeId, true);
          };
  
          _this.onMouseOverNode = function (id) {
@@ -94,7 +103,7 @@ index 28d6456..c61aac3
              if (_this.state.config.linkHighlightBehavior) {
                  _this.state.highlightedLink = { source: source, target: target };
  
-@@ -450,11 +478,12 @@ var Graph = function (_React$Component) {
+@@ -450,11 +480,12 @@ var Graph = function (_React$Component) {
          _this.onMouseOutLink = function (source, target) {
              _this.props.onMouseOutLink && _this.props.onMouseOutLink(source, target);
  
@@ -111,7 +120,7 @@ index 28d6456..c61aac3
          };
  
          _this.pauseSimulation = function () {
-@@ -544,7 +573,7 @@ var Graph = function (_React$Component) {
+@@ -544,7 +575,7 @@ var Graph = function (_React$Component) {
          }
      }, {
          key: "componentDidUpdate",
@@ -120,7 +129,7 @@ index 28d6456..c61aac3
              // if the property staticGraph was activated we want to stop possible ongoing simulation
              this.state.config.staticGraph && this.pauseSimulation();
  
-@@ -558,6 +587,39 @@ var Graph = function (_React$Component) {
+@@ -558,6 +589,27 @@ var Graph = function (_React$Component) {
                  this._zoomConfig();
                  this.setState({ configUpdated: false });
              }
@@ -141,26 +150,14 @@ index 28d6456..c61aac3
 +            if (this.props.selectedLinks !== prevProps.selectedLinks) {
 +                console.log("update highlighting based on selectedlinks in componentDidUpdate");
 +                console.log("links: ", this.state.links);
-+
-+                // TODO - first clear highlighting
-+                // let linksObj = this.state.links;
-+                // Object.keys(linksObj).forEach(sourceId => {
-+                //     linksObj[sourceId].highlighted = false;
-+                // });
-+
++                
 +                // highlight selection
 +                console.log("this.props.selectedLinks", this.props.selectedLinks);
-+                // this.props.selectedLinks.forEach(nodeId => {
-+                //     nodesObj[nodeId].highlighted = true;
-+                // });
-+
-+                // console.log(nodesObj);
-+                // this.setState({ nodes: nodesObj });
 +            }
          }
      }, {
          key: "componentDidMount",
-@@ -585,7 +647,7 @@ var Graph = function (_React$Component) {
+@@ -585,7 +637,7 @@ var Graph = function (_React$Component) {
                  onMouseOverNode: this.onMouseOverNode,
                  onMouseOut: this.onMouseOutNode
              }, this.state.d3Links, this.state.links, {
@@ -169,7 +166,7 @@ index 28d6456..c61aac3
                  onRightClickLink: this.props.onRightClickLink,
                  onMouseOverLink: this.onMouseOverLink,
                  onMouseOutLink: this.onMouseOutLink
-@@ -601,6 +663,17 @@ var Graph = function (_React$Component) {
+@@ -601,6 +653,17 @@ var Graph = function (_React$Component) {
  
              var containerProps = this._generateFocusAnimationProps();
  

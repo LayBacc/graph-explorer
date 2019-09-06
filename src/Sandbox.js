@@ -94,17 +94,11 @@ export default class Sandbox extends React.Component {
   };
 
   onClickGraph = () => {
-    console.log('clicked on graph');
-
     this.setState({
       selectedNode: {}, // TODO - dedup with selectedNodes
       selectedNodes: [],
       selectedLinks: []
     });
-
-    console.log("selectedNodes: ", this.state.selectedNodes, "selectedLinks: ", this.state.selectedLinks);
-    console.log(this.selectedData());
-    // TODO - clear highlighting
   };
   
   /**
