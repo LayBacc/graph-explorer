@@ -3,16 +3,30 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "bootstrap": "^4.3.1",
+    "d3": "^5.10.0",
+    "lodash": "^4.17.15",
+    "patch-package": "^6.1.2",
+    "query-string": "^6.8.2",
     "react": "^16.9.0",
+    "react-bootstrap": "^1.0.0-beta.11",
+    "react-d3-graph": "^2.1.0",
     "react-dom": "^16.9.0",
-    "react-scripts": "3.1.1"
+    "react-editable-json-tree": "^2.2.1",
+    "react-jsonschema-form": "^1.7.0",
+    "react-scripts": "3.1.1",
+    "react-select": "^3.0.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "server": "node-env-run server --exec nodemon | pino-colada",
+    "dev": "run-p server start",
+    "postinstall": "patch-package"
   },
+  "proxy": "http://localhost:3001",
   "eslintConfig": {
     "extends": "react-app"
   },
@@ -27,5 +41,12 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "express-pino-logger": "^4.0.0",
+    "node-env-run": "^3.0.2",
+    "nodemon": "^1.19.1",
+    "npm-run-all": "^4.1.5",
+    "pino-colada": "^1.4.5"
   }
 }

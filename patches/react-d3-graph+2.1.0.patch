@@ -1,0 +1,309 @@
+diff --git a/node_modules/react-d3-graph/.eslintignore b/node_modules/react-d3-graph/.eslintignore
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/.prettierignore b/node_modules/react-d3-graph/.prettierignore
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/.prettierrc.js b/node_modules/react-d3-graph/.prettierrc.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/CHANGELOG.md b/node_modules/react-d3-graph/CHANGELOG.md
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/LICENSE b/node_modules/react-d3-graph/LICENSE
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/README.md b/node_modules/react-d3-graph/README.md
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/RELEASE_PROCESS.md b/node_modules/react-d3-graph/RELEASE_PROCESS.md
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/dist/rd3g.bundle.js b/node_modules/react-d3-graph/dist/rd3g.bundle.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/documentation.yml b/node_modules/react-d3-graph/documentation.yml
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/jest.config.js b/node_modules/react-d3-graph/jest.config.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/graph/Graph.js b/node_modules/react-d3-graph/lib/components/graph/Graph.js
+old mode 100644
+new mode 100755
+index 28d6456..c61aac3
+--- a/node_modules/react-d3-graph/lib/components/graph/Graph.js
++++ b/node_modules/react-d3-graph/lib/components/graph/Graph.js
+@@ -355,6 +355,8 @@ var Graph = function (_React$Component) {
+         };
+ 
+         _this._onDragStart = function () {
++            console.log("_onDragStart in Graph.js");
++
+             _this.pauseSimulation();
+             if (_this.state.enableFocusAnimation) {
+                 _this.setState({ enableFocusAnimation: false });
+@@ -423,23 +425,49 @@ var Graph = function (_React$Component) {
+                     _this.nodeClickTimer = clearTimeout(_this.nodeClickTimer);
+                 }
+             }
++
++            _this.props.selectNode(clickedNodeId);
++            // _this.state.config.nodeHighlightBehavior && _this._setNodeHighlightedValue(clickedNodeId, true);
+         };
+ 
+         _this.onMouseOverNode = function (id) {
+             _this.props.onMouseOverNode && _this.props.onMouseOverNode(id);
+ 
++            if (_this.props.hasSelection && _this.props.hasSelection()) return;
++
+             _this.state.config.nodeHighlightBehavior && _this._setNodeHighlightedValue(id, true);
+         };
+ 
+         _this.onMouseOutNode = function (id) {
+             _this.props.onMouseOutNode && _this.props.onMouseOutNode(id);
+ 
+-            _this.state.config.nodeHighlightBehavior && _this._setNodeHighlightedValue(id, false);
++            if (!_this.state.config.nodeHighlightBehavior) return;
++
++            if (_this.props.hasSelection && _this.props.hasSelection()) return;
++            // console.log("_this.props.hasSelection() in Graph.js", _this.props.hasSelection());
++
++            _this._setNodeHighlightedValue(id, false);
++        };
++
++        _this.onClickLink = function (source, target) {
++            _this.props.selectLink(source, target);
++
++            if (_this.state.config.linkHighlightBehavior) {
++                _this.setState({
++                    highlightedLink: {
++                        source: source,
++                        target: target
++                    }
++                });
++                _this._tick();
++            }
+         };
+ 
+         _this.onMouseOverLink = function (source, target) {
+             _this.props.onMouseOverLink && _this.props.onMouseOverLink(source, target);
+ 
++            if (_this.props.hasSelection && _this.props.hasSelection()) return;
++
+             if (_this.state.config.linkHighlightBehavior) {
+                 _this.state.highlightedLink = { source: source, target: target };
+ 
+@@ -450,11 +478,12 @@ var Graph = function (_React$Component) {
+         _this.onMouseOutLink = function (source, target) {
+             _this.props.onMouseOutLink && _this.props.onMouseOutLink(source, target);
+ 
+-            if (_this.state.config.linkHighlightBehavior) {
+-                _this.state.highlightedLink = undefined;
++            if (!_this.state.config.linkHighlightBehavior) return;
+ 
+-                _this._tick();
+-            }
++            if (_this.props.hasSelection && _this.props.hasSelection()) return;
++
++            _this.state.highlightedLink = undefined;
++            _this._tick();
+         };
+ 
+         _this.pauseSimulation = function () {
+@@ -544,7 +573,7 @@ var Graph = function (_React$Component) {
+         }
+     }, {
+         key: "componentDidUpdate",
+-        value: function componentDidUpdate() {
++        value: function componentDidUpdate(prevProps) {
+             // if the property staticGraph was activated we want to stop possible ongoing simulation
+             this.state.config.staticGraph && this.pauseSimulation();
+ 
+@@ -558,6 +587,39 @@ var Graph = function (_React$Component) {
+                 this._zoomConfig();
+                 this.setState({ configUpdated: false });
+             }
++
++            if (this.props.selectedNodes !== prevProps.selectedNodes) {
++                // first clear highlighting
++                let nodesObj = this.state.nodes;
++                Object.keys(nodesObj).forEach(key => {
++                    nodesObj[key].highlighted = false;
++                });
++                // highlight selection
++                this.props.selectedNodes.forEach(node => {
++                    nodesObj[node.id].highlighted = true;
++                });
++                this.setState({ nodes: nodesObj });
++            }
++
++            if (this.props.selectedLinks !== prevProps.selectedLinks) {
++                console.log("update highlighting based on selectedlinks in componentDidUpdate");
++                console.log("links: ", this.state.links);
++
++                // TODO - first clear highlighting
++                // let linksObj = this.state.links;
++                // Object.keys(linksObj).forEach(sourceId => {
++                //     linksObj[sourceId].highlighted = false;
++                // });
++
++                // highlight selection
++                console.log("this.props.selectedLinks", this.props.selectedLinks);
++                // this.props.selectedLinks.forEach(nodeId => {
++                //     nodesObj[nodeId].highlighted = true;
++                // });
++
++                // console.log(nodesObj);
++                // this.setState({ nodes: nodesObj });
++            }
+         }
+     }, {
+         key: "componentDidMount",
+@@ -585,7 +647,7 @@ var Graph = function (_React$Component) {
+                 onMouseOverNode: this.onMouseOverNode,
+                 onMouseOut: this.onMouseOutNode
+             }, this.state.d3Links, this.state.links, {
+-                onClickLink: this.props.onClickLink,
++                onClickLink: this.onClickLink,
+                 onRightClickLink: this.props.onRightClickLink,
+                 onMouseOverLink: this.onMouseOverLink,
+                 onMouseOutLink: this.onMouseOutLink
+@@ -601,6 +663,17 @@ var Graph = function (_React$Component) {
+ 
+             var containerProps = this._generateFocusAnimationProps();
+ 
++
++            // TODO - try updating the 
++            // get the render() method to be called, with memoization
++            // it's done above
++                // nodes = _graphRenderer$render.nodes,
++                // links = _graphRenderer$render.links,
++            // YES - highlightedLink and highlightedNode is passed!!
++            
++            // set 
++
++
+             return _react2.default.createElement(
+                 "div",
+                 { id: this.state.id + "-" + _graph2.default.GRAPH_WRAPPER_ID },
+diff --git a/node_modules/react-d3-graph/lib/components/graph/collapse.helper.js b/node_modules/react-d3-graph/lib/components/graph/collapse.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.builder.js b/node_modules/react-d3-graph/lib/components/graph/graph.builder.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.config.js b/node_modules/react-d3-graph/lib/components/graph/graph.config.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.const.js b/node_modules/react-d3-graph/lib/components/graph/graph.const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.helper.js b/node_modules/react-d3-graph/lib/components/graph/graph.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.renderer.js b/node_modules/react-d3-graph/lib/components/graph/graph.renderer.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/link/Link.js b/node_modules/react-d3-graph/lib/components/link/Link.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/link/link.const.js b/node_modules/react-d3-graph/lib/components/link/link.const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/link/link.helper.js b/node_modules/react-d3-graph/lib/components/link/link.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/marker/Marker.js b/node_modules/react-d3-graph/lib/components/marker/Marker.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/marker/marker.const.js b/node_modules/react-d3-graph/lib/components/marker/marker.const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/marker/marker.helper.js b/node_modules/react-d3-graph/lib/components/marker/marker.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/node/Node.js b/node_modules/react-d3-graph/lib/components/node/Node.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/node/node.const.js b/node_modules/react-d3-graph/lib/components/node/node.const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/components/node/node.helper.js b/node_modules/react-d3-graph/lib/components/node/node.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/const.js b/node_modules/react-d3-graph/lib/const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/err.js b/node_modules/react-d3-graph/lib/err.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/index.js b/node_modules/react-d3-graph/lib/index.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/lib/utils.js b/node_modules/react-d3-graph/lib/utils.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/graph/Graph.jsx b/node_modules/react-d3-graph/src/components/graph/Graph.jsx
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/graph/collapse.helper.js b/node_modules/react-d3-graph/src/components/graph/collapse.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/graph/graph.builder.js b/node_modules/react-d3-graph/src/components/graph/graph.builder.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/graph/graph.config.js b/node_modules/react-d3-graph/src/components/graph/graph.config.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/graph/graph.const.js b/node_modules/react-d3-graph/src/components/graph/graph.const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/graph/graph.helper.js b/node_modules/react-d3-graph/src/components/graph/graph.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/graph/graph.renderer.jsx b/node_modules/react-d3-graph/src/components/graph/graph.renderer.jsx
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/link/Link.jsx b/node_modules/react-d3-graph/src/components/link/Link.jsx
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/link/link.const.js b/node_modules/react-d3-graph/src/components/link/link.const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/link/link.helper.js b/node_modules/react-d3-graph/src/components/link/link.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/marker/Marker.jsx b/node_modules/react-d3-graph/src/components/marker/Marker.jsx
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/marker/marker.const.js b/node_modules/react-d3-graph/src/components/marker/marker.const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/marker/marker.helper.js b/node_modules/react-d3-graph/src/components/marker/marker.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/node/Node.jsx b/node_modules/react-d3-graph/src/components/node/Node.jsx
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/node/node.const.js b/node_modules/react-d3-graph/src/components/node/node.const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/components/node/node.helper.js b/node_modules/react-d3-graph/src/components/node/node.helper.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/const.js b/node_modules/react-d3-graph/src/const.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/err.js b/node_modules/react-d3-graph/src/err.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/index.js b/node_modules/react-d3-graph/src/index.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/src/utils.js b/node_modules/react-d3-graph/src/utils.js
+old mode 100644
+new mode 100755
+diff --git a/node_modules/react-d3-graph/tsconfig.json b/node_modules/react-d3-graph/tsconfig.json
+old mode 100644
+new mode 100755
