@@ -12,7 +12,8 @@ export default {
     minZoom: 0.1,
     nodeHighlightBehavior: true,
     panAndZoom: false,
-    staticGraph: false,
+    // staticGraph: true,//false,
+    // staticGraphWithDragAndDrop: true,
     width: 800,
     d3: {
         alphaTarget: 0.05,

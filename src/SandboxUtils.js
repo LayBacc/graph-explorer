@@ -113,16 +113,44 @@ function getLinkData(sourceId, targetId, links) {
   return null;
 }
 
-// return a new array, with the node filtered out
-function removeNode(nodes, del) {
-  return nodes.filter((node) => {
-    return node.id !== del.id;
+// return updated graph data, with nodes (and links) removed
+// TODO - remove link selected link data as well 
+function removeSelectedData(nodes, delNodeIds, links, delLinks) {
+  const updatedNodes = nodes.filter((node) => {
+    return !delNodeIds.includes(node.id);
   });
+
+  // first remove link data from node removal 
+  let updatedLinks = links.filter((link) => {
+    return !delNodeIds.includes(link.source) && !delNodeIds.includes(link.target);
+  });
+
+  updatedLinks = updatedLinks.filter((link) => {
+    return !delLinks.map(l => l.source).includes(link.source) || !delLinks.map(l => l.target).includes(link.target);
+  });
+
+  return {
+    nodes: updatedNodes,
+    links: updatedLinks
+  };
 }
 
-// return a new array, with the link filtered out
-function removeLink() {
+function applyNodeTypeConfig(nodes, config) {
+  return nodes.map(node => {
+    if (!node.nodeType || !config || !config[node.nodeType]) return node;
 
+    const nodeTypeConfig = config[node.nodeType];
+    let styledNode = node;
+
+    if (nodeTypeConfig.symbolType) {
+      styledNode.symbolType = nodeTypeConfig.symbolType;
+    }
+    if (nodeTypeConfig.color) {
+      styledNode.color = nodeTypeConfig.color;
+    }
+
+    return styledNode;
+  });
 }
 
 
@@ -132,5 +160,6 @@ export default {
   setValue,
   getNodeData,
   getLinkData,
-  removeNode
+  removeSelectedData,
+  applyNodeTypeConfig
 };

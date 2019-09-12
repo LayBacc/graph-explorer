@@ -28,24 +28,18 @@ export class AddNodeDropdown extends React.Component {
     this.props.addNode({ 
       name: this.state.name, 
       nodeType: this.state.nodeType,
-      ...this.getSymbolType(this.state.nodeType)
-      // symbolType: this.getSymbolType(this.state.nodeType)
+      ...this.getNodeConfig(this.state.nodeType)
     });
   }
 
-  // TODO - adjust size as well
-  getSymbolType(nodeType) {
-    return {
-      ingredient: { symbolType: "circle" },
-      process: { symbolType: "square" }
-    }[nodeType];
+  getNodeConfig(nodeType) {
+    return this.props.nodeTypeConfig[nodeType];
   }
 
   nodeTypeOptions() {
-    return [
-      { value: "ingredient", label: "Ingredient" },
-      { value: "process", label: "Process" }
-    ];
+    return Object.keys(this.props.nodeTypeConfig).map(nodeType => {
+      return { value: nodeType, label: nodeType }      
+    });
   }
 
   render() {

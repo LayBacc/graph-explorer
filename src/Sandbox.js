@@ -58,12 +58,30 @@ export default class Sandbox extends React.Component {
       generatedConfig: {},
       schema,
       data,
-      title: '',
+      title: "",
       fullscreen,
       selectedNodes: [],
       selectedLinks: [],
+      nodeTypeConfig: {},
       nodeIdToBeRemoved: null,
     };
+  };
+
+  /**
+    * Replace the current graph with the newly loaded one
+    */
+  loadGraphData = (filename, graphData) => {
+    const title = filename.split(".json")[0];
+
+    console.log("loadGraphData: ", utils.applyNodeTypeConfig(graphData.nodes, graphData.nodeTypes));
+
+    // TODO - apply styles to nodes
+
+    this.setState({ 
+      title: title,
+      data: { nodes: utils.applyNodeTypeConfig(graphData.nodes, graphData.nodeTypes), links: graphData.links },
+      nodeTypeConfig: graphData.nodeTypes || {}
+    });
   };
 
   hasSelection = () => {
@@ -94,10 +112,27 @@ export default class Sandbox extends React.Component {
   };
 
   onClickGraph = () => {
+    console.log("onClickGraph state.data: ", this.state.data);
+
+    // clear selection
     this.setState({
-      selectedNode: {}, // TODO - dedup with selectedNodes
       selectedNodes: [],
       selectedLinks: []
+    });
+  };
+
+  handleNodeDragMove = (nodeId, x, y, rawNodesData) => {
+    // TODO - update fx and fy of the node
+    let nodes = this.state.data.nodes;
+    let movedNodeIndex = nodes.findIndex(n => n.id == nodeId);
+    nodes[movedNodeIndex].fx = x;
+    nodes[movedNodeIndex].fy = y;
+
+    this.setState({
+      data: {
+        links: this.state.data.links,
+        nodes: nodes
+      }
     });
   };
   
@@ -113,7 +148,11 @@ export default class Sandbox extends React.Component {
   onClickSave = () => {
     const reqData = {
       title: this.state.title,
-      graph: this.state.data
+      graph: { 
+        nodes: this.state.data.nodes,
+        links: this.state.data.links,
+        nodeTypes: this.state.nodeTypeConfig
+      }
     };
 
     // refactor this into a postData method implementation: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
@@ -149,16 +188,18 @@ export default class Sandbox extends React.Component {
   addNode = (nodeData) => {
     if (this.state.data.nodes && this.state.data.nodes.length) {
       const newNodeId = `Node ${this.state.data.nodes.length}`;
-
-      this.state.data.nodes.push({ 
+      const newNode = {
         id: newNodeId, 
         name: nodeData.name,
-        nodeType: nodeData.nodeType,
-        symbolType: nodeData.symbolType
-      });
-
+        nodeType: nodeData.nodeType
+      };
+      const nodes = [...this.state.data.nodes, newNode];
+      
       this.setState({
-        data: this.state.data,
+        data: {
+          nodes: utils.applyNodeTypeConfig(nodes, this.state.nodeTypeConfig),
+          links: this.state.data.links
+        },
       });
     } else {
       // 1st node
@@ -185,19 +226,19 @@ export default class Sandbox extends React.Component {
   /**
    * Remove a node.
    */
-  onClickRemoveNode = () => {
-    if (this.state.data.nodes && this.state.data.nodes.length) {
-      const id = this.state.data.nodes[0].id;
+  // onClickRemoveNode = () => {
+  //   if (this.state.data.nodes && this.state.data.nodes.length) {
+  //     const id = this.state.data.nodes[0].id;
 
-      this.state.data.nodes.splice(0, 1);
-      const links = this.state.data.links.filter(l => l.source !== id && l.target !== id);
-      const data = { nodes: this.state.data.nodes, links };
+  //     this.state.data.nodes.splice(0, 1);
+  //     const links = this.state.data.links.filter(l => l.source !== id && l.target !== id);
+  //     const data = { nodes: this.state.data.nodes, links };
 
-      this.setState({ data });
-    } else {
-      console.log("No more nodes to remove!");
-    }
-  };
+  //     this.setState({ data });
+  //   } else {
+  //     console.log("No more nodes to remove!");
+  //   }
+  // };
 
   // _buildGraphConfig = data => {
   //   let config = {};
@@ -245,10 +286,18 @@ export default class Sandbox extends React.Component {
   onGraphKeyDown = (e) => {
     const key = e.keyCode || e.charCode;
 
-    if (key == 46 && Object.keys(this.state.selectedNode).length > 0) {
-      this.state.data.nodes = utils.removeNode(this.state.data.nodes, this.state.selectedNode);
-      this.setState({ data: this.state.data })
+    if (key == 46 && (Object.keys(this.state.selectedNodes).length > 0 || Object.keys(this.state.selectedLinks).length > 0)) {
+      const updatedData = utils.removeSelectedData(
+        this.state.data.nodes, 
+        this.state.selectedNodes.map(n => n.id),
+        this.state.data.links,
+        this.state.selectedLinks
+      );
+
+      this.setState({ data: updatedData });
     }
+
+    
   };
 
   handleTitleChange = (e) => {
@@ -342,8 +391,6 @@ export default class Sandbox extends React.Component {
    * by JsonTree
    */
   onSelectedNodesUpdate = nodes => {
-    console.log(nodes);
-
     let updatedNodes = this.state.data.nodes;
 
     nodes.forEach(node => {
@@ -354,7 +401,7 @@ export default class Sandbox extends React.Component {
     this.setState({
       data: {
         links: this.state.data.links,
-        nodes: updatedNodes
+        nodes: utils.applyNodeTypeConfig(updatedNodes, this.state.nodeTypeConfig)
       }
     });
   };
@@ -375,6 +422,22 @@ export default class Sandbox extends React.Component {
       data: {
         nodes: this.state.data.nodes,
         links: updatedLinks
+      }
+    });
+  };
+
+  /**
+   * Update node data each time an update is triggered
+   * by JsonTree
+   */
+  onNodeTypeConfigUpdate = config => {
+    console.log("onNodeTypeConfigUpdate: ", config);
+
+    this.setState({
+      nodeTypeConfig: config,
+      data: {
+        links: this.state.data.links,
+        nodes: utils.applyNodeTypeConfig(this.state.data.nodes, config)
       }
     });
   };
@@ -423,6 +486,7 @@ export default class Sandbox extends React.Component {
             <Dropdown.Menu 
               as={AddNodeDropdown} 
               addNode={this.addNode}
+              nodeTypeConfig={this.state.nodeTypeConfig}
               title="Create a new node" >
             </Dropdown.Menu>
           </Dropdown> 
@@ -443,6 +507,7 @@ export default class Sandbox extends React.Component {
           
 
           {fullscreen}
+          {/*
           <button
             onClick={this.resetNodesPositions}
             className="btn btn-default btn-margin-left"
@@ -451,6 +516,7 @@ export default class Sandbox extends React.Component {
           >
             Unstick nodes
           </button> 
+          */}
         </ButtonToolbar>
         {/*
           <button
@@ -480,17 +546,6 @@ export default class Sandbox extends React.Component {
     );
   };
 
-  /**
-    * Replace the current graph with the newly loaded one
-    */
-  loadGraphData = (filename, graphData) => {
-    const title = filename.split(".json")[0]
-    this.setState({ 
-    title: title,
-    data: graphData
-    });
-  };
-
   render() {
     // This does not happens in this sandbox scenario running time, but if we set staticGraph config
     // to true in the constructor we will provide nodes with initial positions
@@ -511,6 +566,7 @@ export default class Sandbox extends React.Component {
       selectedLinks: this.state.selectedLinks,
       selectedData: this.selectedData,
       hasSelection: this.hasSelection,
+      handleNodeDragMove: this.handleNodeDragMove,
       // onDoubleClickNode: this.onDoubleClickNode,
       // onRightClickNode: this.onRightClickNode,
       onClickGraph: this.onClickGraph,
@@ -617,8 +673,11 @@ export default class Sandbox extends React.Component {
 
           <div className="container__graph-legend">
             <h4>Legend</h4>
-            <p>TODO - use JSON tree for now, mapping nodeType to properties</p>
-            <p>we would need to move to logic from AddNodeDropdown</p>
+            <JsonTree
+                data={this.state.nodeTypeConfig}
+                onFullyUpdate={this.onNodeTypeConfigUpdate}
+                rootName="Node Types"
+              />
           </div>
 
           {/*<div className="container__graph-data">
