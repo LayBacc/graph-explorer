@@ -1,1 +1,1 @@
-{"links":[{"source":"Node 4","target":"Node 5"}],"nodes":[{"id":"VUX"},{"id":"Guardian","symbolType":"square"},{"id":"Broodhmome","symbolType":"square"},{"id":"Node 3","name":"step"},{"id":"Node 4","name":"step 2"},{"id":"Node 5","name":"step 3"}]}
+{"nodes":[{"id":"VUX","fx":null,"fy":null},{"id":"Guardian","symbolType":"square"},{"id":"Broodhmome","symbolType":"square"},{"id":"Node 3","name":"step"},{"id":"Node 4","name":"step 2","fx":null,"fy":null},{"id":"Node 5","name":"step 3","fx":null,"fy":null}],"links":[{"source":"Node 4","target":"Node 5"}],"nodeTypes":{}}

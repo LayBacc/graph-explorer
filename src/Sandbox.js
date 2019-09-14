@@ -62,6 +62,7 @@ export default class Sandbox extends React.Component {
       fullscreen,
       selectedNodes: [],
       selectedLinks: [],
+      multiSelect: false,
       nodeTypeConfig: {},
       nodeIdToBeRemoved: null,
     };
@@ -95,8 +96,25 @@ export default class Sandbox extends React.Component {
     }
   };
 
-  selectNode = (id) => {
-    const selectedNodes = [utils.getNodeData(id, this.state.data.nodes)];
+  selectNode = (nodeId) => {
+    let selectedNodes = this.state.selectedNodes;
+    const nodeData = utils.getNodeData(nodeId, this.state.data.nodes);
+    const selectedNodeIndex = selectedNodes.findIndex(n => n.id == nodeId);
+
+    if (this.state.multiSelect) {
+      if (selectedNodeIndex < 0) {
+        selectedNodes = this.state.selectedNodes;
+        selectedNodes.push(nodeData);
+      }
+      // deselect 
+      else {
+        selectedNodes.splice(selectedNodeIndex, 1);
+      }
+    }
+    else {
+      selectedNodes = [nodeData];
+    }
+    
     this.setState({ 
       selectedNodes: selectedNodes, 
       selectedLinks: [] 
@@ -112,8 +130,6 @@ export default class Sandbox extends React.Component {
   };
 
   onClickGraph = () => {
-    console.log("onClickGraph state.data: ", this.state.data);
-
     // clear selection
     this.setState({
       selectedNodes: [],
@@ -121,8 +137,7 @@ export default class Sandbox extends React.Component {
     });
   };
 
-  handleNodeDragMove = (nodeId, x, y, rawNodesData) => {
-    // TODO - update fx and fy of the node
+  handleNodeDragMove = (nodeId, x, y) => {
     let nodes = this.state.data.nodes;
     let movedNodeIndex = nodes.findIndex(n => n.id == nodeId);
     nodes[movedNodeIndex].fx = x;
@@ -135,6 +150,27 @@ export default class Sandbox extends React.Component {
       }
     });
   };
+
+  // handle dragging of all selected nodes
+  handleSelectionDragMove = (dx, dy) => {
+    const selectedNodeIds = this.state.selectedNodes.map(n => n.id);
+    let nodes = this.state.data.nodes;
+    nodes.forEach(node => {
+      // if node.id in selectedNodes
+      if (selectedNodeIds.includes(node.id)) {
+          node.fx += dx;
+          node.fy += dy;
+      }
+    });
+
+    this.setState({
+      data: {
+        links: this.state.data.links,
+        nodes: nodes
+      }
+    });
+  };
+
   
   /**
    * Sets on/off fullscreen visualization mode.
@@ -297,7 +333,13 @@ export default class Sandbox extends React.Component {
       this.setState({ data: updatedData });
     }
 
-    
+    if (e.ctrlKey) {
+      this.setState({ multiSelect: true });
+    }
+  };
+
+  onGraphKeyUp = (e) => {
+    this.setState({ multiSelect: false });
   };
 
   handleTitleChange = (e) => {
@@ -567,6 +609,7 @@ export default class Sandbox extends React.Component {
       selectedData: this.selectedData,
       hasSelection: this.hasSelection,
       handleNodeDragMove: this.handleNodeDragMove,
+      handleSelectionDragMove: this.handleSelectionDragMove,
       // onDoubleClickNode: this.onDoubleClickNode,
       // onRightClickNode: this.onRightClickNode,
       onClickGraph: this.onClickGraph,
@@ -586,7 +629,9 @@ export default class Sandbox extends React.Component {
       });
 
       return (
-        <div onKeyDown={this.onGraphKeyDown}
+        <div 
+          onKeyDown={this.onGraphKeyDown}
+          onKeyUp={this.onGraphKeyUp}
           tabIndex="0">
           {this.buildCommonInteractionsPanel()}
           <Graph ref="graph" {...graphProps} />
@@ -602,6 +647,7 @@ export default class Sandbox extends React.Component {
             {this.buildCommonInteractionsPanel()}
             <div className="container__graph-area"
               onKeyDown={this.onGraphKeyDown}
+              onKeyUp={this.onGraphKeyUp}
               tabIndex="0">
               <Graph ref="graph" {...graphProps} />
             </div>
