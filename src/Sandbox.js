@@ -468,6 +468,51 @@ export default class Sandbox extends React.Component {
     });
   };
 
+  // collapse parent nodes of the selected node
+  // Use breadth-first search, and mark all visited nodes as hidden
+  handleCollapseIncomingClick = () => {
+    // we can only collapse one node at a time
+    if (this.state.selectedNodes.length !== 1) return;
+
+    const selectedNode = this.state.selectedNodes[0];
+
+    // BFS 
+    // use a queue
+    let visited = {};
+    let queue = [];
+    queue.push(selectedNode.id);
+
+    while (queue.length > 0) {
+      let currNodeId = queue.shift();
+      let incomingLinks = this.state.data.links.filter(link => {
+        return link.target == currNodeId;
+      });
+
+      incomingLinks.forEach(link => {
+        let sourceId = link.source;
+
+        if (visited[sourceId] !== true) {
+          queue.push(sourceId);
+          visited[sourceId] = true;
+        }
+      });
+    };
+
+    // Mark all visited node to hidden
+    let nodes = this.state.data.nodes.map(node => {
+      if (visited[node.id] === true && node.id !== selectedNode.id) {
+        node.hidden = true;
+      }
+      return node;
+    });
+
+    this.setState({
+      links: this.state.data.links,
+      nodes: nodes
+    })
+  };
+
+
   /**
    * Update node data each time an update is triggered
    * by JsonTree
@@ -546,9 +591,10 @@ export default class Sandbox extends React.Component {
             </Dropdown.Menu>
           </Dropdown>
 
-          
-
           {fullscreen}
+          
+          <button onClick={this.handleCollapseIncomingClick}>Collapse (Incoming)</button>
+
           {/*
           <button
             onClick={this.resetNodesPositions}

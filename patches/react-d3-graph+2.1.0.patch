@@ -31,7 +31,7 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/Graph.js b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 old mode 100644
 new mode 100755
-index 28d6456..f43fd33
+index 28d6456..8c70bc5
 --- a/node_modules/react-d3-graph/lib/components/graph/Graph.js
 +++ b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 @@ -313,7 +313,6 @@ var Graph = function (_React$Component) {
@@ -186,13 +186,11 @@ index 28d6456..f43fd33
              // if the property staticGraph was activated we want to stop possible ongoing simulation
              this.state.config.staticGraph && this.pauseSimulation();
  
-@@ -578,14 +641,16 @@ var Graph = function (_React$Component) {
+@@ -578,14 +641,14 @@ var Graph = function (_React$Component) {
      }, {
          key: "render",
          value: function render() {
 -            var _graphRenderer$render = graphRenderer.renderGraph(this.state.nodes, {
-+            // TODO - call this._highlightSelection
-+
 +            var _graphRenderer$render = graphRenderer.renderGraph(this._highlightSelection(this.state.nodes), {
                  onClickNode: this.onClickNode,
                  onDoubleClickNode: this.onDoubleClickNode,
@@ -293,6 +291,36 @@ index 4117c77..d744320
 diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.renderer.js b/node_modules/react-d3-graph/lib/components/graph/graph.renderer.js
 old mode 100644
 new mode 100755
+index 166a2ef..8ab2c5e
+--- a/node_modules/react-d3-graph/lib/components/graph/graph.renderer.js
++++ b/node_modules/react-d3-graph/lib/components/graph/graph.renderer.js
+@@ -63,6 +63,14 @@ function _renderLinks(nodes, links, linksMatrix, config, linkCallbacks, highligh
+         });
+     }
+ 
++    // hide links where source/target nodes are explicitly hidden
++    outLinks = outLinks.filter(function (link) {
++        const source = link.source;
++        const target = link.target;
++        const isHidden = nodes[source.id].hidden === true || nodes[target.id].hidden === true;
++        return !isHidden;
++    });
++
+     return outLinks.map(function (link) {
+         var source = link.source,
+             target = link.target;
+@@ -100,6 +108,11 @@ function _renderNodes(nodes, nodeCallbacks, config, highlightedNode, highlighted
+         });
+     }
+ 
++    // filter out explicitly hidden nodes
++    outNodes = outNodes.filter(function (nodeId) {
++        return !(nodes[nodeId].hidden && nodes[nodeId].hidden === true);
++    });
++
+     return outNodes.map(function (nodeId) {
+         var props = (0, _graph3.buildNodeProps)(Object.assign({}, nodes[nodeId], { id: "" + nodeId }), config, nodeCallbacks, highlightedNode, highlightedLink, transform);
+ 
 diff --git a/node_modules/react-d3-graph/lib/components/link/Link.js b/node_modules/react-d3-graph/lib/components/link/Link.js
 old mode 100644
 new mode 100755
