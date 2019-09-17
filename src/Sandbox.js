@@ -13,9 +13,13 @@ import reactD3GraphUtils from "react-d3-graph/src/utils";
 import { JsonTree } from "react-editable-json-tree";
 import { AddNodeDropdown } from "./AddNodeDropdown";
 import { AddLinkDropdown } from "./AddLinkDropdown";
+import { CollapseNodeDropdown } from "./CollapseNodeDropdown";
 import { GraphDataFolder } from "./GraphDataFolder";
 
 import { Dropdown, Button, ButtonToolbar, InputGroup } from "react-bootstrap";
+import { FaRegEye } from 'react-icons/fa';
+
+import uuidv1 from "uuid/v1";
 
 const sandboxData = utils.loadDataset();
 
@@ -143,6 +147,8 @@ export default class Sandbox extends React.Component {
     nodes[movedNodeIndex].fx = x;
     nodes[movedNodeIndex].fy = y;
 
+    console.log(nodes[movedNodeIndex], x, y)
+
     this.setState({
       data: {
         links: this.state.data.links,
@@ -223,7 +229,8 @@ export default class Sandbox extends React.Component {
    */
   addNode = (nodeData) => {
     if (this.state.data.nodes && this.state.data.nodes.length) {
-      const newNodeId = `Node ${this.state.data.nodes.length}`;
+      const newNodeId = uuidv1();//`Node ${this.state.data.nodes.length}`;
+
       const newNode = {
         id: newNodeId, 
         name: nodeData.name,
@@ -254,7 +261,6 @@ export default class Sandbox extends React.Component {
   };
 
   addLink = (linkData) => {
-    console.log(linkData);
     this.state.data.links.push(linkData);
     this.setState({ data: this.state.data });
   };
@@ -475,6 +481,7 @@ export default class Sandbox extends React.Component {
     if (this.state.selectedNodes.length !== 1) return;
 
     const selectedNode = this.state.selectedNodes[0];
+    const collapsedState = !selectedNode.collapsed; 
 
     // BFS 
     // use a queue
@@ -501,14 +508,20 @@ export default class Sandbox extends React.Component {
     // Mark all visited node to hidden
     let nodes = this.state.data.nodes.map(node => {
       if (visited[node.id] === true && node.id !== selectedNode.id) {
-        node.hidden = true;
+        node.hidden = collapsedState;
       }
       return node;
     });
 
+    // update collapsed state in graph data
+    const selectedIndex = nodes.findIndex(n => n.id == selectedNode.id);
+    nodes[selectedIndex].collapsed = collapsedState;
+
     this.setState({
-      links: this.state.data.links,
-      nodes: nodes
+      data: {
+        links: this.state.data.links,
+        nodes: nodes
+      }
     })
   };
 
@@ -593,9 +606,22 @@ export default class Sandbox extends React.Component {
 
           {fullscreen}
           
-          <button onClick={this.handleCollapseIncomingClick}>Collapse (Incoming)</button>
+          <button onClick={this.handleCollapseIncomingClick}>Toggle Collapse (Incoming)</button>
+
+          <Dropdown>
+            <Dropdown.Toggle variant="default">
+              <FaRegEye />
+            </Dropdown.Toggle> 
+
+            <Dropdown.Menu 
+              as={CollapseNodeDropdown} 
+              graphData={this.state.data}
+              selectedNodes={this.state.selectedNodes} >
+            </Dropdown.Menu>
+          </Dropdown>
 
           {/*
+          */}
           <button
             onClick={this.resetNodesPositions}
             className="btn btn-default btn-margin-left"
@@ -604,7 +630,6 @@ export default class Sandbox extends React.Component {
           >
             Unstick nodes
           </button> 
-          */}
         </ButtonToolbar>
         {/*
           <button

@@ -148,6 +148,9 @@ function applyNodeTypeConfig(nodes, config) {
     if (nodeTypeConfig.color) {
       styledNode.color = nodeTypeConfig.color;
     }
+    if (nodeTypeConfig.svg && !node.svg) {
+      styledNode.svg = nodeTypeConfig.svg;
+    }
 
     return styledNode;
   });

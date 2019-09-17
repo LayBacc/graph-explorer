@@ -54,7 +54,7 @@ export default {
         labelProperty: "label",
         mouseCursor: "pointer",
         opacity: 1,
-        renderLabel: false,
+        renderLabel: true,
         semanticStrokeWidth: false,
         strokeWidth: 2.5,
         type: "STRAIGHT",

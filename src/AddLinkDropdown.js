@@ -39,7 +39,8 @@ export class AddLinkDropdown extends React.Component {
 
     const linkData = { 
       source: this.state.from.value,
-      target: this.state.to.value
+      target: this.state.to.value,
+      label: this.state.name
     };
     this.props.addLink(linkData);
   }

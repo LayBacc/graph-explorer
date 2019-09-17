@@ -31,7 +31,7 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/Graph.js b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 old mode 100644
 new mode 100755
-index 28d6456..8c70bc5
+index 28d6456..311a3fc
 --- a/node_modules/react-d3-graph/lib/components/graph/Graph.js
 +++ b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 @@ -313,7 +313,6 @@ var Graph = function (_React$Component) {
@@ -42,19 +42,21 @@ index 28d6456..8c70bc5
              if (_this.state.enableFocusAnimation) {
                  if (_this.focusAnimationTimeout) {
                      clearTimeout(_this.focusAnimationTimeout);
-@@ -332,14 +331,49 @@ var Graph = function (_React$Component) {
+@@ -332,14 +331,52 @@ var Graph = function (_React$Component) {
              };
          };
  
-+        // TODO - call this in render, to apply this.props.selectedNodes
 +        _this._highlightSelection = function(nodes) {
 +            let nodesObj = nodes;
++
 +            // first clear highlighting
 +            Object.keys(nodesObj).forEach(key => {
 +                delete nodesObj[key].highlighted; 
 +            });
 +
 +            this.props.selectedNodes.forEach(node => {
++                if (!nodesObj[node.id]) return;
++
 +                nodesObj[node.id].highlighted = true;
 +            });
 +            return nodesObj;
@@ -73,7 +75,8 @@ index 28d6456..8c70bc5
 +            if (_this.state.config.staticGraph) return;
 +
 +            const draggingSelection = _this.props.selectedNodes.map(n => n.id).includes(id);
-+            if (_this.props.selectedNodes.length > 0 && draggingSelection) {
++            // when multiple nodes are selected
++            if (_this.props.selectedNodes.length > 1 && draggingSelection) {
 +                // drag every node in selectedNodes
 +                _this.props.selectedNodes.forEach(node => {
 +                    var draggedNode = _this.state.nodes[node.id];
@@ -93,7 +96,7 @@ index 28d6456..8c70bc5
                  // this is where d3 and react bind
                  var draggedNode = _this.state.nodes[id];
  
-@@ -350,6 +384,8 @@ var Graph = function (_React$Component) {
+@@ -350,6 +387,8 @@ var Graph = function (_React$Component) {
                  draggedNode["fx"] = draggedNode.x;
                  draggedNode["fy"] = draggedNode.y;
  
@@ -102,7 +105,7 @@ index 28d6456..8c70bc5
                  _this._tick();
              }
          };
-@@ -398,6 +434,9 @@ var Graph = function (_React$Component) {
+@@ -398,6 +437,9 @@ var Graph = function (_React$Component) {
              if (tagName.toUpperCase() === "SVG" && name === "svg-container-" + _this.state.id) {
                  _this.props.onClickGraph && _this.props.onClickGraph();
              }
@@ -112,7 +115,7 @@ index 28d6456..8c70bc5
          };
  
          _this.onClickNode = function (clickedNodeId) {
-@@ -423,23 +462,46 @@ var Graph = function (_React$Component) {
+@@ -423,23 +465,46 @@ var Graph = function (_React$Component) {
                      _this.nodeClickTimer = clearTimeout(_this.nodeClickTimer);
                  }
              }
@@ -160,7 +163,7 @@ index 28d6456..8c70bc5
              if (_this.state.config.linkHighlightBehavior) {
                  _this.state.highlightedLink = { source: source, target: target };
  
-@@ -450,11 +512,12 @@ var Graph = function (_React$Component) {
+@@ -450,11 +515,12 @@ var Graph = function (_React$Component) {
          _this.onMouseOutLink = function (source, target) {
              _this.props.onMouseOutLink && _this.props.onMouseOutLink(source, target);
  
@@ -177,7 +180,7 @@ index 28d6456..8c70bc5
          };
  
          _this.pauseSimulation = function () {
-@@ -544,7 +607,7 @@ var Graph = function (_React$Component) {
+@@ -544,7 +610,7 @@ var Graph = function (_React$Component) {
          }
      }, {
          key: "componentDidUpdate",
@@ -186,7 +189,32 @@ index 28d6456..8c70bc5
              // if the property staticGraph was activated we want to stop possible ongoing simulation
              this.state.config.staticGraph && this.pauseSimulation();
  
-@@ -578,14 +641,14 @@ var Graph = function (_React$Component) {
+@@ -558,6 +624,24 @@ var Graph = function (_React$Component) {
+                 this._zoomConfig();
+                 this.setState({ configUpdated: false });
+             }
++
++            // aftering collapsing nodes, bind to D3 again
++            const prevNodes = prevProps.data.nodes;
++            const currNodes = this.props.data.nodes;
++            if (prevNodes.length === currNodes.length && JSON.stringify(currNodes) !== JSON.stringify(prevNodes)) {
++                let hiddenStateChange = false;
++
++                for (const [index, node] of prevNodes.entries()) {
++                    if (prevNodes[index].hidden !== currNodes[index].hidden) {
++                        hiddenStateChange = true;
++                        break;
++                    }
++                }
++
++                if (hiddenStateChange) {
++                    this._graphForcesConfig();
++                }
++            }
+         }
+     }, {
+         key: "componentDidMount",
+@@ -578,14 +662,14 @@ var Graph = function (_React$Component) {
      }, {
          key: "render",
          value: function render() {
@@ -209,6 +237,34 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.builder.js b/node_modules/react-d3-graph/lib/components/graph/graph.builder.js
 old mode 100644
 new mode 100755
+index 4dfcc6d..97fdc0b
+--- a/node_modules/react-d3-graph/lib/components/graph/graph.builder.js
++++ b/node_modules/react-d3-graph/lib/components/graph/graph.builder.js
+@@ -71,6 +71,14 @@ function buildLinkProps(link, nodes, links, config, linkCallbacks, highlightedNo
+ 
+     var d = (0, _link.buildLinkPathDefinition)({ source: { x: x1, y: y1 }, target: { x: x2, y: y2 } }, config.link.type);
+ 
++    let invertLabel = x1 > x2;
++    let textTransformProp = "";
++    if (invertLabel) {
++        console.log("in buildLinkProps, link: ", link, x1, y1, x2, y2);
++        const midPoint = { x: x2 + (x1 - x2) / 2, y: y2 + (y1 - y2) / 2 };
++        textTransformProp = `rotate(180,${midPoint.x},${midPoint.y})`;
++    }
++
+     var mainNodeParticipates = false;
+ 
+     switch (config.highlightDegree) {
+@@ -142,7 +150,8 @@ function buildLinkProps(link, nodes, links, config, linkCallbacks, highlightedNo
+         onClickLink: linkCallbacks.onClickLink,
+         onRightClickLink: linkCallbacks.onRightClickLink,
+         onMouseOverLink: linkCallbacks.onMouseOverLink,
+-        onMouseOutLink: linkCallbacks.onMouseOutLink
++        onMouseOutLink: linkCallbacks.onMouseOutLink,
++        textTransformProp: textTransformProp
+     };
+ }
+ 
 diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.config.js b/node_modules/react-d3-graph/lib/components/graph/graph.config.js
 old mode 100644
 new mode 100755
@@ -218,7 +274,7 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.helper.js b/node_modules/react-d3-graph/lib/components/graph/graph.helper.js
 old mode 100644
 new mode 100755
-index 4117c77..d744320
+index 4117c77..4b9b931
 --- a/node_modules/react-d3-graph/lib/components/graph/graph.helper.js
 +++ b/node_modules/react-d3-graph/lib/components/graph/graph.helper.js
 @@ -125,7 +125,7 @@ function _initializeNodes(graphNodes) {
@@ -230,16 +286,10 @@ index 4117c77..d744320
  
          if (!node.hasOwnProperty("x")) {
              node.x = 0;
-@@ -292,17 +292,55 @@ function checkForGraphElementsChanges(nextProps, currentState) {
+@@ -292,17 +292,49 @@ function checkForGraphElementsChanges(nextProps, currentState) {
          };
      });
      var graphElementsUpdated = !(_utils2.default.isDeepEqual(nextNodes, stateD3Nodes) && _utils2.default.isDeepEqual(nextLinks, stateD3Links));
-+
-+
-+    // console.log("in checkForGraphElementsChanges");
-+    // console.log("nodes: ", nextNodes, stateD3Nodes, _utils2.default.isDeepEqual(nextNodes, stateD3Nodes), JSON.stringify(nextNodes) === JSON.stringify(stateD3Nodes));
-+    // console.log("links: ", nextLinks, stateD3Links, _utils2.default.isDeepEqual(nextLinks, stateD3Links), JSON.stringify(nextLinks) === JSON.stringify(stateD3Links));
-+
 +
      var newGraphElements = nextNodes.length !== stateD3Nodes.length || nextLinks.length !== stateD3Links.length || !_utils2.default.isDeepEqual(nextNodes.map(function (_ref) {
          var id = _ref.id;
@@ -324,6 +374,19 @@ index 166a2ef..8ab2c5e
 diff --git a/node_modules/react-d3-graph/lib/components/link/Link.js b/node_modules/react-d3-graph/lib/components/link/Link.js
 old mode 100644
 new mode 100755
+index 5f50d0d..5dc3f44
+--- a/node_modules/react-d3-graph/lib/components/link/Link.js
++++ b/node_modules/react-d3-graph/lib/components/link/Link.js
+@@ -138,7 +138,8 @@ var Link = function (_React$Component) {
+                     fill: this.props.fontColor,
+                     fontSize: this.props.fontSize,
+                     fontWeight: this.props.fontWeight
+-                }
++                },
++                transform: this.props.textTransformProp
+             };
+ 
+             return _react2.default.createElement(
 diff --git a/node_modules/react-d3-graph/lib/components/link/link.const.js b/node_modules/react-d3-graph/lib/components/link/link.const.js
 old mode 100644
 new mode 100755
