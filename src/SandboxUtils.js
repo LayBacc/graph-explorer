@@ -146,20 +146,32 @@ function getConnectedTypes(nodeId, nodes, links) {
   assignConnectedLabels(connectedNodes, "incoming", connectedTypes);
   assignConnectedLabels(connectedNodes, "outgoing", connectedTypes);
 
+  console.log("connectedTypes", connectedTypes);
+
   return connectedTypes;
 }
 
-// TODO - 
 function assignConnectedLabels(connectedNodes, direction, connectedTypes) {
   Object.keys(connectedNodes[direction]).forEach(otherId => {
     const node = connectedNodes[direction][otherId];
     const label = direction === "incoming" ? node.nodeType + "-" + node.link.label : node.link.label + "-" + node.nodeType;
 
+    connectedTypes[direction].nodeLabels = connectedTypes[direction].nodeLabels || {};
+    connectedTypes[direction].linkLabels = connectedTypes[direction].linkLabels || {};
+
     if (node.link.label) {
-      connectedTypes[direction][label] = { linkLabel: node.link.label, nodeLabel: node.nodeType };
+      const linkLabel = { 
+        [node.link.label]: {
+          connectedNodeType: node.nodeType,
+          selected: false 
+        } 
+      };
+      Object.assign(connectedTypes[direction].linkLabels, linkLabel);
     }
     else {
-      connectedTypes[direction][node.nodeType] = { nodeLabel: node.nodeType };
+      const nodeLabel = { [node.nodeType]: { selected: false } };
+      Object.assign(connectedTypes[direction].nodeLabels, nodeLabel);
+      // connectedTypes[direction][node.nodeType] = { nodeLabel: node.nodeType };
     }
   });
 }

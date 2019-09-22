@@ -5,32 +5,106 @@ export class NodeMenu extends React.Component {
     super(props, context);
 
     this.handleChange = this.handleChange.bind(this);
-    this.state = { name: '', from: null, to: null };
+    // this.state = { connectedTypesByNode: {} };
+  }
+
+  selectedNodeConnectedTypes() {
+    const { 
+      connectedTypesByNode, 
+      selectedNode
+    } = this.props;
+
+    return connectedTypesByNode[selectedNode.id];
   }
 
   handleChange(e) {
-    this.setState({ [e.target.name]: e.target.value });
+    const direction = e.target.id.split(":")[0];
+    const connectedTypeLabel = e.target.id.split(":")[1];
+    const checked = e.target.checked;
+
+    // console.log(direction, typeLabel, checked);
+    const nodeLabel = connectedTypeLabel.split("-")[0];
+    const linkLabel = connectedTypeLabel.split("-")[1];
+    // const { linkLabel, nodeLabel } = this.props.connectedTypesByNode[this.props.selectedNode.id][direction][typeLabel];
+
+    // console.log(this.selectedNodeConnectedTypes()[direction]);
+
+    this.props.handleSelectedNodeTypeChange(this.props.selectedNode.id, direction, linkLabel, nodeLabel, checked);
   }
 
-  buildConnectedNodeTypes = (direction) => {
-    return Object.keys(this.props.connectedTypes[direction]).map(label => {
+  buildConnectedType(direction, label, connectedTypeData) {
+    const checkedState = connectedTypeData.selected;
 
-      return(
-        <div>
+    return(
+      <div>
+        <input 
+          className="form-check-input" 
+          type="checkbox"
+          id={direction + ":" + label}
+          onChange={this.handleChange}
+          checked={checkedState} />
+        <label className="form-check-label" htmlFor={label}>
           { label }
-          <br /><br />
-        </div>
-      );
+        </label>
+      </div>
+    );
+  }
+
+  buildConnectedNodeTypes(direction) {
+    // console.log("in buildConnectedNodeTypes", );
+    const { nodeLabels, linkLabels } = this.selectedNodeConnectedTypes()[direction];
+
+    const nodeOptions = Object.keys(nodeLabels).map(nodeLabel => {
+      const nodeTypeData = nodeLabels[nodeLabel];
+      return this.buildConnectedType(direction, nodeLabel, nodeTypeData);
     });
-  };
+
+    const linkOptions = Object.keys(linkLabels).map(linkLabel => {
+      const linkTypeData = linkLabels[linkLabel];
+      const label = `${linkTypeData.connectedNodeType}-${linkLabel}`
+
+      return this.buildConnectedType(direction, label, linkTypeData);
+    });
+
+
+    //  return Object.keys(this.selectedNodeConnectedTypes()[direction]).map(label => {
+
+    //   let checkedState = false;
+    //   if (this.selectedNodeConnectedTypes() && this.selectedNodeConnectedTypes()[direction]) {
+
+    //     const nodeLabels = this.selectedNodeConnectedTypes()[direction].nodeLabels; 
+    //     const linkLabels = this.selectedNodeConnectedTypes()[direction].linkLabels;
+    //   }
+    return(
+      <div>
+        { nodeOptions }
+        { linkOptions }
+      </div> 
+    )
+    //   return(
+    //     <div>
+    //       <input 
+    //         className="form-check-input" 
+    //         type="checkbox"
+    //         id={direction + ":" + label}
+    //         onChange={this.handleChange}
+    //         checked={checkedState} />
+    //       <label className="form-check-label" htmlFor={label}>
+    //         { label }
+    //       </label>
+    //     </div>
+    //   );
+    // });
+  }
 
   render() {
     const {
       children,
       className,
       coords,
-      connectedTypes
+      connectedTypesByNode
     } = this.props;
+
 
     // const { value } = this.state;
 
@@ -50,10 +124,14 @@ export class NodeMenu extends React.Component {
         padding: "1em"
       }}>
         <strong><p>Incoming Connections</p></strong>
-        {incomingNodeComponents}
+        <div className="form-check">
+          {incomingNodeComponents}
+        </div>
 
         <strong><p>Outgoing Connections</p></strong>
-        {outgoingNodeComponents}
+        <div className="form-check">
+          {outgoingNodeComponents}
+        </div>
       </div>
     );
   }

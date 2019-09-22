@@ -72,6 +72,7 @@ export default class Sandbox extends React.Component {
       showNodeMenu: false,
       nodeMenuCoords: {},
       nodeTypeConfig: {},
+      connectedTypesByNode: {},  // keep track of the selected types for each node
       visibleNodes: {},
       nodeIdToBeRemoved: null,
     };
@@ -390,12 +391,19 @@ export default class Sandbox extends React.Component {
 
     const selectedNode = this.state.selectedNodes[0];
     let nodeCoords = this.refs.graph.getNodeCoords(selectedNode.id);
-    console.log(nodeCoords);
-
     // account for the menu bar height
     nodeCoords.y += 100;
 
-    this.setState({ showNodeMenu: true, nodeMenuCoords: nodeCoords });
+    let connectedTypesByNode = this.state.connectedTypesByNode;
+    const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
+    const connectedTypes = utils.getConnectedTypes(selectedNode.id, this.state.data.nodes, this.state.data.links);
+    connectedTypesByNode[selectedNode.id] = connectedTypes;
+
+    this.setState({ 
+      showNodeMenu: true, 
+      nodeMenuCoords: nodeCoords,
+      connectedTypesByNode: connectedTypesByNode// TODO
+    });
   };
 
   resetGraphConfig = () => {
@@ -630,37 +638,35 @@ export default class Sandbox extends React.Component {
     });
   };
 
-  
+  handleSelectedNodeTypeChange = (selectedNodeId, direction, linkLabel, nodeLabel, checked) => {
+    console.log(direction, linkLabel, nodeLabel, checked);
+
+    let connectedTypesByNode = this.state.connectedTypesByNode;
+    let selectedTypesForNode = connectedTypesByNode[selectedNodeId] || {};
+    
+    // update the checked state
+    if (linkLabel) {
+      Object.assign(selectedTypesForNode[direction].linkLabels[linkLabel], { selected: checked });
+    }
+    else {
+      Object.assign(selectedTypesForNode[direction].nodeLabels[nodeLabel], { selected: checked });
+
+    }
+    connectedTypesByNode[selectedNodeId] = selectedTypesForNode;
+    
+    this.setState({ connectedTypesByNode: connectedTypesByNode });
+  };
 
   buildNodeMenu = () => {
     if (this.state.showNodeMenu && this.state.selectedNodes.length === 1) {
 
       const selectedNode = this.state.selectedNodes[0];
-      const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
-      const connectedTypes = utils.getConnectedTypes(selectedNode.id, this.state.data.nodes, this.state.data.links);
-    
+
       return <NodeMenu 
         coords={this.state.nodeMenuCoords} 
         selectedNode={selectedNode}
-        connectedTypes={connectedTypes} />;
-
-      // return <div style={{
-      //     left: this.state.nodeMenuCoords.x,
-      //     top: this.state.nodeMenuCoords.y,
-      //     width: "300px", 
-      //     border: "1px solid black", 
-      //     position: "absolute",
-      //     zIndex: 1,
-      //     backgroundColor: "white",
-      //     padding: "1em"
-      //   }}>
-        
-      //   <strong><p>Incoming Connections</p></strong>
-      //   {incomingNodeComponents}
-
-      //   <strong><p>Outgoing Connections</p></strong>
-      //   {outgoingNodeComponents}
-      // </div>;
+        connectedTypesByNode={this.state.connectedTypesByNode}
+        handleSelectedNodeTypeChange={this.handleSelectedNodeTypeChange} />;
     }
     else {
       return <div></div>;
