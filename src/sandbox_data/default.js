@@ -95,7 +95,8 @@ module.exports = {
     ],
     nodes: [
         {
-            id: "Node 1"
+            id: "Node 1",
+            hidden: false
         }
         // {
         //     id: "Androsynth",

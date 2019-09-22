@@ -31,7 +31,7 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/Graph.js b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 old mode 100644
 new mode 100755
-index 28d6456..311a3fc
+index 28d6456..e4d9360
 --- a/node_modules/react-d3-graph/lib/components/graph/Graph.js
 +++ b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 @@ -313,7 +313,6 @@ var Graph = function (_React$Component) {
@@ -180,7 +180,20 @@ index 28d6456..311a3fc
          };
  
          _this.pauseSimulation = function () {
-@@ -544,7 +610,7 @@ var Graph = function (_React$Component) {
+@@ -482,6 +548,12 @@ var Graph = function (_React$Component) {
+             return !_this.state.config.staticGraph && _this.state.simulation.restart();
+         };
+ 
++        // TODO - use this method to onDragEnd instead of updating the app state onDragMove
++        _this.getNodeCoords = function(nodeId) {
++            var node = _this.state.nodes[nodeId];
++            return { x: node.x, y: node.y };
++        };
++
+         if (!_this.props.id) {
+             _utils2.default.throwErr(_this.constructor.name, _err2.default.GRAPH_NO_ID_PROP);
+         }
+@@ -544,7 +616,7 @@ var Graph = function (_React$Component) {
          }
      }, {
          key: "componentDidUpdate",
@@ -189,7 +202,7 @@ index 28d6456..311a3fc
              // if the property staticGraph was activated we want to stop possible ongoing simulation
              this.state.config.staticGraph && this.pauseSimulation();
  
-@@ -558,6 +624,24 @@ var Graph = function (_React$Component) {
+@@ -558,6 +630,24 @@ var Graph = function (_React$Component) {
                  this._zoomConfig();
                  this.setState({ configUpdated: false });
              }
@@ -214,7 +227,7 @@ index 28d6456..311a3fc
          }
      }, {
          key: "componentDidMount",
-@@ -578,14 +662,14 @@ var Graph = function (_React$Component) {
+@@ -578,14 +668,14 @@ var Graph = function (_React$Component) {
      }, {
          key: "render",
          value: function render() {
@@ -237,17 +250,16 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/graph.builder.js b/node_modules/react-d3-graph/lib/components/graph/graph.builder.js
 old mode 100644
 new mode 100755
-index 4dfcc6d..97fdc0b
+index 4dfcc6d..82e6e26
 --- a/node_modules/react-d3-graph/lib/components/graph/graph.builder.js
 +++ b/node_modules/react-d3-graph/lib/components/graph/graph.builder.js
-@@ -71,6 +71,14 @@ function buildLinkProps(link, nodes, links, config, linkCallbacks, highlightedNo
+@@ -71,6 +71,13 @@ function buildLinkProps(link, nodes, links, config, linkCallbacks, highlightedNo
  
      var d = (0, _link.buildLinkPathDefinition)({ source: { x: x1, y: y1 }, target: { x: x2, y: y2 } }, config.link.type);
  
 +    let invertLabel = x1 > x2;
 +    let textTransformProp = "";
 +    if (invertLabel) {
-+        console.log("in buildLinkProps, link: ", link, x1, y1, x2, y2);
 +        const midPoint = { x: x2 + (x1 - x2) / 2, y: y2 + (y1 - y2) / 2 };
 +        textTransformProp = `rotate(180,${midPoint.x},${midPoint.y})`;
 +    }
@@ -255,7 +267,7 @@ index 4dfcc6d..97fdc0b
      var mainNodeParticipates = false;
  
      switch (config.highlightDegree) {
-@@ -142,7 +150,8 @@ function buildLinkProps(link, nodes, links, config, linkCallbacks, highlightedNo
+@@ -142,7 +149,8 @@ function buildLinkProps(link, nodes, links, config, linkCallbacks, highlightedNo
          onClickLink: linkCallbacks.onClickLink,
          onRightClickLink: linkCallbacks.onRightClickLink,
          onMouseOverLink: linkCallbacks.onMouseOverLink,

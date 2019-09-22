@@ -19,6 +19,25 @@ export class CollapseNodeDropdown extends React.Component {
     e.preventDefault();
   }
 
+  isSelectionValid() {
+    return this.props.selectedNodes && this.props.selectedNodes.length > 0;
+  }
+
+  incomingLinks(nodeId) {
+    return this.props.graphData.links.filter(link => {
+      return link.target == nodeId;
+    });
+  }
+
+  getAllLinks(nodeId) {
+    const links = this.incomingLinks(nodeId);
+
+    // TODO - react components
+    return links.map(link => (
+      <li>source: {link.source}, label: {link.label}</li>
+    ));
+  }
+
   render() {
     const {
       children,
@@ -28,13 +47,12 @@ export class CollapseNodeDropdown extends React.Component {
     } = this.props;
 
     let containerClassName = "dropdown-form " + className;
-
-    console.log("CollapseNodeDropdown", this.props.selectedNodes);
+    const allLinks = this.isSelectionValid() ? this.getAllLinks(this.props.selectedNodes[0].id) : "";
 
     return (
       <div style={style} className={containerClassName} aria-labelledby={labeledBy}>
       	<p>Show or hide connections to/from the selected node(s)</p>
-        
+        { allLinks }
       </div>
     );
   }

@@ -15,9 +15,10 @@ import { AddNodeDropdown } from "./AddNodeDropdown";
 import { AddLinkDropdown } from "./AddLinkDropdown";
 import { CollapseNodeDropdown } from "./CollapseNodeDropdown";
 import { GraphDataFolder } from "./GraphDataFolder";
+import { NodeMenu } from "./NodeMenu";
 
 import { Dropdown, Button, ButtonToolbar, InputGroup } from "react-bootstrap";
-import { FaRegEye } from 'react-icons/fa';
+import { FaRegEyeSlash } from 'react-icons/fa';
 
 import uuidv1 from "uuid/v1";
 
@@ -67,7 +68,11 @@ export default class Sandbox extends React.Component {
       selectedNodes: [],
       selectedLinks: [],
       multiSelect: false,
+      ctrlKeyDown: false,
+      showNodeMenu: false,
+      nodeMenuCoords: {},
       nodeTypeConfig: {},
+      visibleNodes: {},
       nodeIdToBeRemoved: null,
     };
   };
@@ -90,7 +95,17 @@ export default class Sandbox extends React.Component {
   };
 
   hasSelection = () => {
-    return this.selectedData().nodes.length > 0 || this.selectedData().links.length > 0;
+    return this.hasNodeSelection() || this.selectedData().links.length > 0;
+  };
+
+  hasNodeSelection = () => {
+    return this.selectedData().nodes.length > 0;
+  };
+
+  isNodeSelected = (nodeId) => {
+    if (this.selectedData().nodes.length < 1) return false;
+
+    return this.state.selectedNodes.map(n => n.id).includes(nodeId);
   };
 
   selectedData = () => {
@@ -105,7 +120,8 @@ export default class Sandbox extends React.Component {
     const nodeData = utils.getNodeData(nodeId, this.state.data.nodes);
     const selectedNodeIndex = selectedNodes.findIndex(n => n.id == nodeId);
 
-    if (this.state.multiSelect) {
+    // multi-select
+    if (this.state.ctrlKeyDown || this.state.multiSelect) {
       if (selectedNodeIndex < 0) {
         selectedNodes = this.state.selectedNodes;
         selectedNodes.push(nodeData);
@@ -121,7 +137,8 @@ export default class Sandbox extends React.Component {
     
     this.setState({ 
       selectedNodes: selectedNodes, 
-      selectedLinks: [] 
+      selectedLinks: [],
+      showNodeMenu: false 
     });
   };
 
@@ -129,7 +146,7 @@ export default class Sandbox extends React.Component {
     const selectedLinks = [utils.getLinkData(source, target, this.state.data.links)];
     this.setState({ 
       selectedNodes: [],
-      selectedLinks: selectedLinks
+      selectedLinks: selectedLinks,
     });
   };
 
@@ -137,7 +154,8 @@ export default class Sandbox extends React.Component {
     // clear selection
     this.setState({
       selectedNodes: [],
-      selectedLinks: []
+      selectedLinks: [],
+      showNodeMenu: false
     });
   };
 
@@ -146,8 +164,6 @@ export default class Sandbox extends React.Component {
     let movedNodeIndex = nodes.findIndex(n => n.id == nodeId);
     nodes[movedNodeIndex].fx = x;
     nodes[movedNodeIndex].fy = y;
-
-    console.log(nodes[movedNodeIndex], x, y)
 
     this.setState({
       data: {
@@ -340,16 +356,46 @@ export default class Sandbox extends React.Component {
     }
 
     if (e.ctrlKey) {
-      this.setState({ multiSelect: true });
+      this.setState({ ctrlKeyDown: true });
+    }
+
+    // ctrl + C
+    if (this.state.ctrlKeyDown && key === 67) {
+      console.log("TODO - copy");
+      this.handleCopySelection();
+    }
+
+    // ctrl + V
+    if (this.state.ctrlKeyDown && key === 86) {
+      console.log("TODO - paste");
+    }
+
+    // ctrl + Q
+    if (this.state.ctrlKeyDown && key == 81) {
+      // TODO - trigger on rightclick as well
+      this.showNodeMenu();
     }
   };
 
   onGraphKeyUp = (e) => {
-    this.setState({ multiSelect: false });
+    this.setState({ ctrlKeyDown: false });
   };
 
   handleTitleChange = (e) => {
     this.setState({ title: e.target.value });
+  };
+
+  showNodeMenu = () => {
+    if (!this.hasNodeSelection()) return;
+
+    const selectedNode = this.state.selectedNodes[0];
+    let nodeCoords = this.refs.graph.getNodeCoords(selectedNode.id);
+    console.log(nodeCoords);
+
+    // account for the menu bar height
+    nodeCoords.y += 100;
+
+    this.setState({ showNodeMenu: true, nodeMenuCoords: nodeCoords });
   };
 
   resetGraphConfig = () => {
@@ -384,6 +430,18 @@ export default class Sandbox extends React.Component {
       })
     );
   };
+
+  // TODO - implement
+  applyNodeVisibility = nodes => {
+    return nodes.map(n => {
+      // nodes that display by default
+      if (n.hidden === false) return n;
+
+      return Object.assign({}, n, {
+        hidden: !this.state.visibleNodes[n.id]
+      });
+    });
+  }
 
   /**
    * Before removing elements (nodes, links)
@@ -475,19 +533,31 @@ export default class Sandbox extends React.Component {
   };
 
   // collapse parent nodes of the selected node
-  // Use breadth-first search, and mark all visited nodes as hidden
+  // Use breadth-first search, and mark visited nodes as hidden
+  // allow for custom filter conditions 
   handleCollapseIncomingClick = () => {
-    // we can only collapse one node at a time
-    if (this.state.selectedNodes.length !== 1) return;
+    const collapseByNode = this.state.selectedNodes.length === 1;
+    const collapseByLink = this.state.selectedLinks.length === 1;
 
-    const selectedNode = this.state.selectedNodes[0];
-    const collapsedState = !selectedNode.collapsed; 
+    if (!collapseByLink && !collapseByNode) return;
 
-    // BFS 
-    // use a queue
+    let selectedNode = {};
+    let selectedLink = {};
+    let collapsedState = true; 
+
+    // BFS implementation
     let visited = {};
     let queue = [];
-    queue.push(selectedNode.id);
+
+    if (collapseByNode) {
+      selectedNode = this.state.selectedNodes[0];
+      queue.push(selectedNode.id);
+      collapsedState = !selectedNode.collapsed;
+    }
+    else if (collapseByLink) {
+      selectedLink = this.state.selectedLinks[0];
+      queue.push(selectedLink.source);
+    }
 
     while (queue.length > 0) {
       let currNodeId = queue.shift();
@@ -507,15 +577,15 @@ export default class Sandbox extends React.Component {
 
     // Mark all visited node to hidden
     let nodes = this.state.data.nodes.map(node => {
-      if (visited[node.id] === true && node.id !== selectedNode.id) {
+      if ((collapseByNode && visited[node.id] === true && node.id !== selectedNode.id) || (collapseByLink && visited[node.id] === true) || (collapseByLink && node.id === selectedLink.source)) {
         node.hidden = collapsedState;
       }
       return node;
     });
 
     // update collapsed state in graph data
-    const selectedIndex = nodes.findIndex(n => n.id == selectedNode.id);
-    nodes[selectedIndex].collapsed = collapsedState;
+    const selectedNodeIndex = collapseByNode ? nodes.findIndex(n => n.id == selectedNode.id) : nodes.findIndex(n => n.id == selectedLink.target);
+    nodes[selectedNodeIndex].collapsed = collapsedState;
 
     this.setState({
       data: {
@@ -525,6 +595,24 @@ export default class Sandbox extends React.Component {
     })
   };
 
+  // TODO - implement a way to unhide node?
+  handleHideNodes = () => {
+    if (this.state.selectedNodes.length < 1) return;
+
+    const nodes = this.state.data.nodes.map(node => {
+      if (this.isNodeSelected(node.id)) {
+        node.hidden = true;
+      }
+      return node;
+    });
+
+    this.setState({
+      data: {
+        links: this.state.data.links,
+        nodes: nodes
+      }
+    })
+  };
 
   /**
    * Update node data each time an update is triggered
@@ -540,6 +628,43 @@ export default class Sandbox extends React.Component {
         nodes: utils.applyNodeTypeConfig(this.state.data.nodes, config)
       }
     });
+  };
+
+  
+
+  buildNodeMenu = () => {
+    if (this.state.showNodeMenu && this.state.selectedNodes.length === 1) {
+
+      const selectedNode = this.state.selectedNodes[0];
+      const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
+      const connectedTypes = utils.getConnectedTypes(selectedNode.id, this.state.data.nodes, this.state.data.links);
+    
+      return <NodeMenu 
+        coords={this.state.nodeMenuCoords} 
+        selectedNode={selectedNode}
+        connectedTypes={connectedTypes} />;
+
+      // return <div style={{
+      //     left: this.state.nodeMenuCoords.x,
+      //     top: this.state.nodeMenuCoords.y,
+      //     width: "300px", 
+      //     border: "1px solid black", 
+      //     position: "absolute",
+      //     zIndex: 1,
+      //     backgroundColor: "white",
+      //     padding: "1em"
+      //   }}>
+        
+      //   <strong><p>Incoming Connections</p></strong>
+      //   {incomingNodeComponents}
+
+      //   <strong><p>Outgoing Connections</p></strong>
+      //   {outgoingNodeComponents}
+      // </div>;
+    }
+    else {
+      return <div></div>;
+    }
   };
 
   /**
@@ -606,8 +731,11 @@ export default class Sandbox extends React.Component {
 
           {fullscreen}
           
-          <button onClick={this.handleCollapseIncomingClick}>Toggle Collapse (Incoming)</button>
+          <button onClick={this.handleCollapseIncomingClick}>Collapse</button>
 
+          <button onClick={this.handleHideNodes}><FaRegEyeSlash /></button>
+
+          {/*
           <Dropdown>
             <Dropdown.Toggle variant="default">
               <FaRegEye />
@@ -620,8 +748,6 @@ export default class Sandbox extends React.Component {
             </Dropdown.Menu>
           </Dropdown>
 
-          {/*
-          */}
           <button
             onClick={this.resetNodesPositions}
             className="btn btn-default btn-margin-left"
@@ -630,6 +756,7 @@ export default class Sandbox extends React.Component {
           >
             Unstick nodes
           </button> 
+          */}
         </ButtonToolbar>
         {/*
           <button
@@ -662,8 +789,11 @@ export default class Sandbox extends React.Component {
   render() {
     // This does not happens in this sandbox scenario running time, but if we set staticGraph config
     // to true in the constructor we will provide nodes with initial positions
+
+    const nodesWithInitialPositioning = this.decorateGraphNodesWithInitialPositioning(this.state.data.nodes);
+
     const data = {
-      nodes: this.decorateGraphNodesWithInitialPositioning(this.state.data.nodes),
+      nodes: this.applyNodeVisibility(nodesWithInitialPositioning),
       links: this.state.data.links,
       focusedNodeId: this.state.data.focusedNodeId,
     };
@@ -711,9 +841,7 @@ export default class Sandbox extends React.Component {
     } else {
       // @TODO: Only show configs that differ from default ones in "Your config" box
       return (
-        <div 
-          className="container"
-          >
+        <div>
           <div className="container__graph">
             {this.buildCommonInteractionsPanel()}
             <div className="container__graph-area"
@@ -725,6 +853,9 @@ export default class Sandbox extends React.Component {
             <span className="container__graph-info">
             Nodes: {this.state.data.nodes.length} | Links: {this.state.data.links.length}
           </span>
+        <div 
+          className="container"
+          >
           </div>
           {/*<div className="container__form">
             <h4>
@@ -810,6 +941,9 @@ export default class Sandbox extends React.Component {
               />
             </div>
           </div>*/}
+
+          {this.buildNodeMenu()}
+        </div>
         </div>
       );
     }

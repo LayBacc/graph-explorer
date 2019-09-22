@@ -91,6 +91,7 @@ function setValue(obj, access, value) {
   access.length > 1 ? setValue(obj[access.shift()], access, value) : (obj[access[0]] = value);
 }
 
+// TODO - use object key lookup (from the <Graph> component state) instead of looping through array
 function getNodeData(nodeId, nodes) {
   for (let i = 0; i < nodes.length; i++) {
     let node = nodes[i];
@@ -102,6 +103,7 @@ function getNodeData(nodeId, nodes) {
   return null;
 }
 
+// TODO - use object key lookup (from the <Graph> component state) instead of looping through array
 function getLinkData(sourceId, targetId, links) {
   for (let i = 0; i < links.length; i++) {
     let link = links[i];
@@ -111,6 +113,55 @@ function getLinkData(sourceId, targetId, links) {
     }
   }
   return null;
+}
+
+// input: links array (sandbox)
+// output: returns { incoming: {}, outgoing: {} }
+// with the neighbor node ID as key, node object as value
+function getConnectedNodes(nodeId, nodes, links) {
+  let incoming = {},
+    outgoing = {};
+
+  // console.log(nodes, links);
+  links.forEach(link => {
+    if (link.source === nodeId) {
+      outgoing[link.target] = getNodeData(link.target, nodes);
+      outgoing[link.target].link = link;
+    }
+    else if (link.target === nodeId) {
+      incoming[link.source] = getNodeData(link.source, nodes); 
+      incoming[link.source].link = link;
+    }
+  });
+
+  return { incoming: incoming, outgoing: outgoing };
+}
+
+// return unique link types
+// links (if there is a label), or nodes (if there are no link labels)
+function getConnectedTypes(nodeId, nodes, links) {
+  const connectedNodes = this.getConnectedNodes(nodeId, nodes, links); 
+  let connectedTypes = { incoming: {}, outgoing: {} };
+  
+  assignConnectedLabels(connectedNodes, "incoming", connectedTypes);
+  assignConnectedLabels(connectedNodes, "outgoing", connectedTypes);
+
+  return connectedTypes;
+}
+
+// TODO - 
+function assignConnectedLabels(connectedNodes, direction, connectedTypes) {
+  Object.keys(connectedNodes[direction]).forEach(otherId => {
+    const node = connectedNodes[direction][otherId];
+    const label = direction === "incoming" ? node.nodeType + "-" + node.link.label : node.link.label + "-" + node.nodeType;
+
+    if (node.link.label) {
+      connectedTypes[direction][label] = { linkLabel: node.link.label, nodeLabel: node.nodeType };
+    }
+    else {
+      connectedTypes[direction][node.nodeType] = { nodeLabel: node.nodeType };
+    }
+  });
 }
 
 // return updated graph data, with nodes (and links) removed
@@ -156,13 +207,14 @@ function applyNodeTypeConfig(nodes, config) {
   });
 }
 
-
 export default {
   generateFormSchema,
   loadDataset,
   setValue,
   getNodeData,
   getLinkData,
+  getConnectedNodes,
+  getConnectedTypes,
   removeSelectedData,
   applyNodeTypeConfig
 };
