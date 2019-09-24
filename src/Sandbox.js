@@ -83,11 +83,6 @@ export default class Sandbox extends React.Component {
     */
   loadGraphData = (filename, graphData) => {
     const title = filename.split(".json")[0];
-
-    console.log("loadGraphData: ", utils.applyNodeTypeConfig(graphData.nodes, graphData.nodeTypes));
-
-    // TODO - apply styles to nodes
-
     this.setState({ 
       title: title,
       data: { nodes: utils.applyNodeTypeConfig(graphData.nodes, graphData.nodeTypes), links: graphData.links },
@@ -251,7 +246,9 @@ export default class Sandbox extends React.Component {
       const newNode = {
         id: newNodeId, 
         name: nodeData.name,
-        nodeType: nodeData.nodeType
+        nodeType: nodeData.nodeType,
+        x: 0,
+        y: 0
       };
       const nodes = [...this.state.data.nodes, newNode];
       
@@ -396,13 +393,16 @@ export default class Sandbox extends React.Component {
 
     let connectedTypesByNode = this.state.connectedTypesByNode;
     const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
-    const connectedTypes = utils.getConnectedTypes(selectedNode.id, this.state.data.nodes, this.state.data.links);
-    connectedTypesByNode[selectedNode.id] = connectedTypes;
+
+    if (!connectedTypesByNode[selectedNode.id]) {
+      const connectedTypes = utils.getConnectedTypes(selectedNode.id, this.state.data.nodes, this.state.data.links);
+      connectedTypesByNode[selectedNode.id] = connectedTypes;
+    }
 
     this.setState({ 
       showNodeMenu: true, 
       nodeMenuCoords: nodeCoords,
-      connectedTypesByNode: connectedTypesByNode// TODO
+      connectedTypesByNode: connectedTypesByNode
     });
   };
 
@@ -433,18 +433,16 @@ export default class Sandbox extends React.Component {
   decorateGraphNodesWithInitialPositioning = nodes => {
     return nodes.map(n =>
       Object.assign({}, n, {
-        x: n.x || Math.floor(Math.random() * 500),
-        y: n.y || Math.floor(Math.random() * 500),
+        x: n.x || Math.floor(Math.random() * 100),
+        y: n.y || Math.floor(Math.random() * 100),
       })
     );
   };
 
-  // TODO - implement
-  applyNodeVisibility = nodes => {
-    return nodes.map(n => {
-      // nodes that display by default
+  applyNodeVisibility = () => {
+    return this.state.data.nodes.map(n => {
+      // nodes that are displayed by default
       if (n.hidden === false) return n;
-
       return Object.assign({}, n, {
         hidden: !this.state.visibleNodes[n.id]
       });
@@ -638,12 +636,38 @@ export default class Sandbox extends React.Component {
     });
   };
 
-  handleSelectedNodeTypeChange = (selectedNodeId, direction, linkLabel, nodeLabel, checked) => {
-    console.log(direction, linkLabel, nodeLabel, checked);
+  // TODO - remove if not used
+  // updateConnectedNodeVisibility = (direction, nodeLabel, linkLabel, checked) => {
+  //   const selectedNode = this.state.selectedNodes[0];
+  //   const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
 
+  //   let visibleNodes = this.state.visibleNodes;
+
+  //   Object.keys(connectedNodes[direction]).forEach(nodeId => {
+  //     const connectedNode = connectedNodes[direction][nodeId];
+  //     const linkTypeSelected = connectedNode.link && connectedNode.link.label === linkLabel;
+  //     const nodeTypeSelected = connectedNode.nodeType === nodeLabel;
+
+  //     if (linkTypeSelected || nodeTypeSelected) {
+  //       visibleNodes[nodeId] = checked;
+  //     }
+  //   });
+
+  //   // update nodes 
+  //   const updatedNodes = this.applyNodeVisibility();
+  //   this.setState({ 
+  //     visibleNodes: visibleNodes,
+  //     data: {
+  //       nodes: updatedNodes,
+  //       links: this.state.data.links
+  //     }
+  //   });
+  // };
+
+  handleSelectedNodeTypeChange = (selectedNodeId, direction, linkLabel, nodeLabel, checked) => {
     let connectedTypesByNode = this.state.connectedTypesByNode;
     let selectedTypesForNode = connectedTypesByNode[selectedNodeId] || {};
-    
+
     // update the checked state
     if (linkLabel) {
       Object.assign(selectedTypesForNode[direction].linkLabels[linkLabel], { selected: checked });
@@ -653,8 +677,50 @@ export default class Sandbox extends React.Component {
 
     }
     connectedTypesByNode[selectedNodeId] = selectedTypesForNode;
-    
-    this.setState({ connectedTypesByNode: connectedTypesByNode });
+
+    // update visibleNodes
+    let visibleNodes = this.state.visibleNodes;
+    const selectedNode = this.state.selectedNodes[0];
+    const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
+
+    Object.keys(connectedNodes[direction]).forEach(nodeId => {
+      const connectedNode = connectedNodes[direction][nodeId];
+      const linkTypeSelected = connectedNode.link && connectedNode.link.label === linkLabel;
+      const nodeTypeSelected = connectedNode.nodeType === nodeLabel;
+
+      if (linkTypeSelected || nodeTypeSelected) {
+        visibleNodes[nodeId] = checked;
+      }
+    });
+
+
+    // update node visibility
+    const updatedNodes = this.state.data.nodes.map(n => {
+      const hideNode = visibleNodes[n.id] === false;
+
+      // nodes that are displayed by default
+      if (n.hidden === false && !hideNode) return n;
+      return Object.assign({}, n, {
+        hidden: !visibleNodes[n.id]
+      });
+    });
+
+    console.log("in handleSelectedNodeTypeChange, updatedNodes: ", updatedNodes, ", visibleNodes: ", visibleNodes);
+
+    this.setState({ 
+      connectedTypesByNode: connectedTypesByNode,
+      visibleNodes: visibleNodes,
+      data: {
+        nodes: updatedNodes,
+        links: this.state.data.links
+      }
+    });
+
+
+
+    // this.setState({ 
+    //   connectedTypesByNode: connectedTypesByNode 
+    // }, () => { this.updateConnectedNodeVisibility(direction, nodeLabel, linkLabel, checked) });
   };
 
   buildNodeMenu = () => {
@@ -797,9 +863,10 @@ export default class Sandbox extends React.Component {
     // to true in the constructor we will provide nodes with initial positions
 
     const nodesWithInitialPositioning = this.decorateGraphNodesWithInitialPositioning(this.state.data.nodes);
+    // const nodesWithVisibilityConfig = this.applyNodeVisibility(nodesWithInitialPositioning);
 
     const data = {
-      nodes: this.applyNodeVisibility(nodesWithInitialPositioning),
+      nodes: nodesWithInitialPositioning, //nodesWithVisibilityConfig,
       links: this.state.data.links,
       focusedNodeId: this.state.data.focusedNodeId,
     };

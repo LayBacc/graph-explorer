@@ -39,7 +39,7 @@
 }
 
 .container__graph-area {
-    max-height: 400px;
+    max-height: 650px; /*400px;*/
     border: 1px dashed #f0f0f0;
     /*margin-left: 20px;
     margin-top: 4px;*/

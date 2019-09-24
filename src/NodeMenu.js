@@ -22,25 +22,23 @@ export class NodeMenu extends React.Component {
     const connectedTypeLabel = e.target.id.split(":")[1];
     const checked = e.target.checked;
 
-    // console.log(direction, typeLabel, checked);
+    // pass the selected node and link label
     const nodeLabel = connectedTypeLabel.split("-")[0];
     const linkLabel = connectedTypeLabel.split("-")[1];
-    // const { linkLabel, nodeLabel } = this.props.connectedTypesByNode[this.props.selectedNode.id][direction][typeLabel];
-
-    // console.log(this.selectedNodeConnectedTypes()[direction]);
 
     this.props.handleSelectedNodeTypeChange(this.props.selectedNode.id, direction, linkLabel, nodeLabel, checked);
   }
 
   buildConnectedType(direction, label, connectedTypeData) {
     const checkedState = connectedTypeData.selected;
+    const elId = direction + ":" + label;
 
     return(
-      <div>
+      <div key={elId}>
         <input 
           className="form-check-input" 
           type="checkbox"
-          id={direction + ":" + label}
+          id={elId}
           onChange={this.handleChange}
           checked={checkedState} />
         <label className="form-check-label" htmlFor={label}>
@@ -51,50 +49,32 @@ export class NodeMenu extends React.Component {
   }
 
   buildConnectedNodeTypes(direction) {
-    // console.log("in buildConnectedNodeTypes", );
     const { nodeLabels, linkLabels } = this.selectedNodeConnectedTypes()[direction];
 
-    const nodeOptions = Object.keys(nodeLabels).map(nodeLabel => {
-      const nodeTypeData = nodeLabels[nodeLabel];
-      return this.buildConnectedType(direction, nodeLabel, nodeTypeData);
-    });
+    let nodeOptions = <div></div>;
+    if (nodeLabels) {
+      nodeOptions = Object.keys(nodeLabels).map(nodeLabel => {
+        const nodeTypeData = nodeLabels[nodeLabel];
+        return this.buildConnectedType(direction, nodeLabel, nodeTypeData);
+      });
+    }
 
-    const linkOptions = Object.keys(linkLabels).map(linkLabel => {
-      const linkTypeData = linkLabels[linkLabel];
-      const label = `${linkTypeData.connectedNodeType}-${linkLabel}`
+    let linkOptions = <div></div>;
+    if (linkLabels) {
+      linkOptions = Object.keys(linkLabels).map(linkLabel => {
+        const linkTypeData = linkLabels[linkLabel];
+        const label = `${linkTypeData.connectedNodeType}-${linkLabel}`
 
-      return this.buildConnectedType(direction, label, linkTypeData);
-    });
+        return this.buildConnectedType(direction, label, linkTypeData);
+      });
+    }
 
-
-    //  return Object.keys(this.selectedNodeConnectedTypes()[direction]).map(label => {
-
-    //   let checkedState = false;
-    //   if (this.selectedNodeConnectedTypes() && this.selectedNodeConnectedTypes()[direction]) {
-
-    //     const nodeLabels = this.selectedNodeConnectedTypes()[direction].nodeLabels; 
-    //     const linkLabels = this.selectedNodeConnectedTypes()[direction].linkLabels;
-    //   }
     return(
       <div>
         { nodeOptions }
         { linkOptions }
       </div> 
-    )
-    //   return(
-    //     <div>
-    //       <input 
-    //         className="form-check-input" 
-    //         type="checkbox"
-    //         id={direction + ":" + label}
-    //         onChange={this.handleChange}
-    //         checked={checkedState} />
-    //       <label className="form-check-label" htmlFor={label}>
-    //         { label }
-    //       </label>
-    //     </div>
-    //   );
-    // });
+    );
   }
 
   render() {

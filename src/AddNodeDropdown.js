@@ -15,7 +15,7 @@ export class AddNodeDropdown extends React.Component {
   }
 
   handleChange(e) {
-    this.setState({ name: e.target.value.toLowerCase() });
+    this.setState({ name: e.target.value });
   }
 
   handleNodeTypeChange(selectedType) {

@@ -4,7 +4,7 @@ export default {
     directed: true,
     focusAnimationDuration: 0.75,
     focusZoom: 1,
-    height: 400,
+    height: 650,
     highlightDegree: 1,
     highlightOpacity: 1,
     linkHighlightBehavior: true,
@@ -14,7 +14,7 @@ export default {
     panAndZoom: false,
     // staticGraph: true,//false,
     // staticGraphWithDragAndDrop: true,
-    width: 800,
+    width: 1000,
     d3: {
         alphaTarget: 0.05,
         gravity: -100,

@@ -156,22 +156,23 @@ function assignConnectedLabels(connectedNodes, direction, connectedTypes) {
     const node = connectedNodes[direction][otherId];
     const label = direction === "incoming" ? node.nodeType + "-" + node.link.label : node.link.label + "-" + node.nodeType;
 
+    // initialize values if not already existing
     connectedTypes[direction].nodeLabels = connectedTypes[direction].nodeLabels || {};
     connectedTypes[direction].linkLabels = connectedTypes[direction].linkLabels || {};
 
     if (node.link.label) {
-      const linkLabel = { 
-        [node.link.label]: {
-          connectedNodeType: node.nodeType,
-          selected: false 
-        } 
-      };
-      Object.assign(connectedTypes[direction].linkLabels, linkLabel);
+      connectedTypes[direction].linkLabels[node.link.label] = connectedTypes[direction].linkLabels[node.link.label] || {};
+      connectedTypes[direction].linkLabels[node.link.label].connectedNodeType = node.nodeType;
+      // set the initial selected state
+      if (node.hidden !== true) {
+        connectedTypes[direction].linkLabels[node.link.label].selected = true;
+      }
     }
-    else {
-      const nodeLabel = { [node.nodeType]: { selected: false } };
+    else if (!node.link.label && !connectedTypes[direction].nodeLabels[node.nodeType]) {
+      const nodeLabel = { [node.nodeType]: {  selected: node.hidden !== true } };
+
+
       Object.assign(connectedTypes[direction].nodeLabels, nodeLabel);
-      // connectedTypes[direction][node.nodeType] = { nodeLabel: node.nodeType };
     }
   });
 }

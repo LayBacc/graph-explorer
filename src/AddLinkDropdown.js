@@ -19,7 +19,12 @@ export class AddLinkDropdown extends React.Component {
   }
 
   handleChange(e) {
-    this.setState({ [e.target.name]: e.target.value });
+    if (e.target.name === "name") {
+      this.setState({ [e.target.name]: e.target.value.toUpperCase() });
+    }
+    else {
+      this.setState({ [e.target.name]: e.target.value });
+    }
   }
 
   handleFromNodeChange(selectedNode) {

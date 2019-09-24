@@ -31,7 +31,7 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/Graph.js b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 old mode 100644
 new mode 100755
-index 28d6456..e4d9360
+index 28d6456..c39e44f
 --- a/node_modules/react-d3-graph/lib/components/graph/Graph.js
 +++ b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 @@ -313,7 +313,6 @@ var Graph = function (_React$Component) {
@@ -202,7 +202,7 @@ index 28d6456..e4d9360
              // if the property staticGraph was activated we want to stop possible ongoing simulation
              this.state.config.staticGraph && this.pauseSimulation();
  
-@@ -558,6 +630,24 @@ var Graph = function (_React$Component) {
+@@ -558,6 +630,27 @@ var Graph = function (_React$Component) {
                  this._zoomConfig();
                  this.setState({ configUpdated: false });
              }
@@ -220,6 +220,9 @@ index 28d6456..e4d9360
 +                    }
 +                }
 +
++                console.log("hiddenStateChange in Graph componentDidUpdate", hiddenStateChange);
++
++
 +                if (hiddenStateChange) {
 +                    this._graphForcesConfig();
 +                }
@@ -227,7 +230,7 @@ index 28d6456..e4d9360
          }
      }, {
          key: "componentDidMount",
-@@ -578,14 +668,14 @@ var Graph = function (_React$Component) {
+@@ -578,14 +671,14 @@ var Graph = function (_React$Component) {
      }, {
          key: "render",
          value: function render() {
