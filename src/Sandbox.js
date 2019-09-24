@@ -927,22 +927,26 @@ export default class Sandbox extends React.Component {
               </div>
               
               <div className="container__graph-selected col-md-4">
-                <h5>Selected Data</h5>
-                <div className="json-data-container">
-                  <JsonTree
-                    data={this.state.selectedNodes}
-                    beforeRemoveAction={this.onBeforeRemoveNodeAttr}
-                    onFullyUpdate={this.onSelectedNodesUpdate}
-                    rootName="Nodes"
-                  />
+                <div class="row p-2 heading">
+                  <h5>Selected Data</h5>
                 </div>
-                <div className="json-data-container">
-                  <JsonTree
-                    data={this.state.selectedLinks}
-                    beforeRemoveAction={this.onBeforeRemoveLinkAttr}
-                    onFullyUpdate={this.onSelectedLinksUpdate}
-                    rootName="Links"
-                  />
+                <div className="pt-3">
+                  <div className="json-data-container">
+                    <JsonTree
+                      data={this.state.selectedNodes}
+                      beforeRemoveAction={this.onBeforeRemoveNodeAttr}
+                      onFullyUpdate={this.onSelectedNodesUpdate}
+                      rootName="Nodes"
+                    />
+                  </div>
+                  <div className="json-data-container">
+                    <JsonTree
+                      data={this.state.selectedLinks}
+                      beforeRemoveAction={this.onBeforeRemoveLinkAttr}
+                      onFullyUpdate={this.onSelectedLinksUpdate}
+                      rootName="Links"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
