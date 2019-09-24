@@ -25,8 +25,8 @@
 }
 
 .container__graph {
-    grid-column: 1 / 4;
-    grid-row: 1 / 2;
+    /*grid-column: 1 / 4;
+    grid-row: 1 / 2;*/
     border: 1px solid black;
 }
 
@@ -72,6 +72,10 @@
     grid-row: 2;
     margin-bottom: 4px;
     z-index: 2;
+    padding: 1em;
+    background-color: #f6f6f6;
+    border: 1px solid #ccc;
+    border-left: 5px solid #ccc;
 }
 
 .container__graph-selected .json-data-container {

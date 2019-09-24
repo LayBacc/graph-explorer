@@ -915,32 +915,58 @@ export default class Sandbox extends React.Component {
       // @TODO: Only show configs that differ from default ones in "Your config" box
       return (
         <div>
-          <div className="container__graph">
+          <div className="container__graph container-fluid m-0">
             {this.buildCommonInteractionsPanel()}
-            <div className="container__graph-area"
-              onKeyDown={this.onGraphKeyDown}
-              onKeyUp={this.onGraphKeyUp}
-              tabIndex="0">
-              <Graph ref="graph" {...graphProps} />
+            
+            <div className="row">
+              <div className="container__graph-area col-md-8"
+                onKeyDown={this.onGraphKeyDown}
+                onKeyUp={this.onGraphKeyUp}
+                tabIndex="0">
+                <Graph ref="graph" {...graphProps} />
+              </div>
+              
+              <div className="container__graph-selected col-md-4">
+                <h5>Selected Data</h5>
+                <div className="json-data-container">
+                  <JsonTree
+                    data={this.state.selectedNodes}
+                    beforeRemoveAction={this.onBeforeRemoveNodeAttr}
+                    onFullyUpdate={this.onSelectedNodesUpdate}
+                    rootName="Nodes"
+                  />
+                </div>
+                <div className="json-data-container">
+                  <JsonTree
+                    data={this.state.selectedLinks}
+                    beforeRemoveAction={this.onBeforeRemoveLinkAttr}
+                    onFullyUpdate={this.onSelectedLinksUpdate}
+                    rootName="Links"
+                  />
+                </div>
+              </div>
             </div>
+
             <span className="container__graph-info">
-            Nodes: {this.state.data.nodes.length} | Links: {this.state.data.links.length}
-          </span>
-        <div 
-          className="container"
-          >
-          </div>
+              Nodes: {this.state.data.nodes.length} | Links: {this.state.data.links.length}
+            </span>
+
+            <div 
+            className="container"
+            >
+            </div>
+
           {/*<div className="container__form">
-            <h4>
+            <h5>
               <a href="https://github.com/danielcaldas/react-d3-graph" target="_blank">
                 react-d3-graph
               </a>
-            </h4>
-            <h4>
+            </h5>
+            <h5>
               <a href="https://danielcaldas.github.io/react-d3-graph/docs/index.html" target="_blank">
                 docs
               </a>
-            </h4>
+            </h5>
             <h3>Configurations</h3>
             <Form
               className="form-wrapper"
@@ -959,33 +985,15 @@ export default class Sandbox extends React.Component {
             </button>
           </div>
           <div className="container__graph-config">
-            <h4>Your config</h4>
+            <h5>Your config</h5>
             <JSONContainer data={this.state.generatedConfig} staticData={false} />
           </div>
           */}
           
-          <div className="container__graph-selected">
-            <h4>Selected Nodes/Edges</h4>
-            <div className="json-data-container">
-              <JsonTree
-                data={this.state.selectedNodes}
-                beforeRemoveAction={this.onBeforeRemoveNodeAttr}
-                onFullyUpdate={this.onSelectedNodesUpdate}
-                rootName="Nodes"
-              />
-            </div>
-            <div className="json-data-container">
-              <JsonTree
-                data={this.state.selectedLinks}
-                beforeRemoveAction={this.onBeforeRemoveLinkAttr}
-                onFullyUpdate={this.onSelectedLinksUpdate}
-                rootName="Links"
-              />
-            </div>
-          </div>
+          
 
           <div className="container__graph-files">
-            <h4>Data Files</h4>
+            <h5>Data Files</h5>
             <p>Click on the filename to load the graph</p>
 
             <GraphDataFolder
@@ -993,7 +1001,7 @@ export default class Sandbox extends React.Component {
           </div>
 
           <div className="container__graph-legend">
-            <h4>Legend</h4>
+            <h5>Legend</h5>
             <JsonTree
                 data={this.state.nodeTypeConfig}
                 onFullyUpdate={this.onNodeTypeConfigUpdate}
@@ -1002,9 +1010,9 @@ export default class Sandbox extends React.Component {
           </div>
 
           {/*<div className="container__graph-data">
-            <h4>
+            <h5>
               Current Graph Data <small>(editable)</small>
-            </h4>
+            </h5>
             <p>TODO - collapse this by default, and place elsewhere</p>
             <div className="json-data-container">
               <JsonTree
@@ -1017,7 +1025,7 @@ export default class Sandbox extends React.Component {
 
           {this.buildNodeMenu()}
         </div>
-        </div>
+      </div>
       );
     }
   }
