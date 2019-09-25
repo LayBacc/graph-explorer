@@ -31,7 +31,7 @@ new mode 100755
 diff --git a/node_modules/react-d3-graph/lib/components/graph/Graph.js b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 old mode 100644
 new mode 100755
-index 28d6456..c39e44f
+index 28d6456..a3a61dc
 --- a/node_modules/react-d3-graph/lib/components/graph/Graph.js
 +++ b/node_modules/react-d3-graph/lib/components/graph/Graph.js
 @@ -313,7 +313,6 @@ var Graph = function (_React$Component) {
@@ -105,7 +105,16 @@ index 28d6456..c39e44f
                  _this._tick();
              }
          };
-@@ -398,6 +437,9 @@ var Graph = function (_React$Component) {
+@@ -382,6 +421,8 @@ var Graph = function (_React$Component) {
+             (0, _d3Selection.selectAll)("#" + _this.state.id + "-" + _graph2.default.GRAPH_CONTAINER_ID).attr("transform", transform);
+ 
+             _this.state.config.panAndZoom && _this.setState({ transform: transform.k });
++
++            _this.props.handleD3Transform && _this.props.handleD3Transform(transform);
+         };
+ 
+         _this.onClickGraph = function (e) {
+@@ -398,6 +439,9 @@ var Graph = function (_React$Component) {
              if (tagName.toUpperCase() === "SVG" && name === "svg-container-" + _this.state.id) {
                  _this.props.onClickGraph && _this.props.onClickGraph();
              }
@@ -115,7 +124,7 @@ index 28d6456..c39e44f
          };
  
          _this.onClickNode = function (clickedNodeId) {
-@@ -423,23 +465,46 @@ var Graph = function (_React$Component) {
+@@ -423,23 +467,46 @@ var Graph = function (_React$Component) {
                      _this.nodeClickTimer = clearTimeout(_this.nodeClickTimer);
                  }
              }
@@ -163,7 +172,7 @@ index 28d6456..c39e44f
              if (_this.state.config.linkHighlightBehavior) {
                  _this.state.highlightedLink = { source: source, target: target };
  
-@@ -450,11 +515,12 @@ var Graph = function (_React$Component) {
+@@ -450,11 +517,12 @@ var Graph = function (_React$Component) {
          _this.onMouseOutLink = function (source, target) {
              _this.props.onMouseOutLink && _this.props.onMouseOutLink(source, target);
  
@@ -180,7 +189,7 @@ index 28d6456..c39e44f
          };
  
          _this.pauseSimulation = function () {
-@@ -482,6 +548,12 @@ var Graph = function (_React$Component) {
+@@ -482,6 +550,12 @@ var Graph = function (_React$Component) {
              return !_this.state.config.staticGraph && _this.state.simulation.restart();
          };
  
@@ -193,7 +202,7 @@ index 28d6456..c39e44f
          if (!_this.props.id) {
              _utils2.default.throwErr(_this.constructor.name, _err2.default.GRAPH_NO_ID_PROP);
          }
-@@ -544,7 +616,7 @@ var Graph = function (_React$Component) {
+@@ -544,7 +618,7 @@ var Graph = function (_React$Component) {
          }
      }, {
          key: "componentDidUpdate",
@@ -202,7 +211,7 @@ index 28d6456..c39e44f
              // if the property staticGraph was activated we want to stop possible ongoing simulation
              this.state.config.staticGraph && this.pauseSimulation();
  
-@@ -558,6 +630,27 @@ var Graph = function (_React$Component) {
+@@ -558,6 +632,26 @@ var Graph = function (_React$Component) {
                  this._zoomConfig();
                  this.setState({ configUpdated: false });
              }
@@ -222,7 +231,6 @@ index 28d6456..c39e44f
 +
 +                console.log("hiddenStateChange in Graph componentDidUpdate", hiddenStateChange);
 +
-+
 +                if (hiddenStateChange) {
 +                    this._graphForcesConfig();
 +                }
@@ -230,7 +238,7 @@ index 28d6456..c39e44f
          }
      }, {
          key: "componentDidMount",
-@@ -578,14 +671,14 @@ var Graph = function (_React$Component) {
+@@ -578,14 +672,14 @@ var Graph = function (_React$Component) {
      }, {
          key: "render",
          value: function render() {

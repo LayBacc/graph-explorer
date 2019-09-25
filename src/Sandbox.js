@@ -74,6 +74,7 @@ export default class Sandbox extends React.Component {
       nodeTypeConfig: {},
       connectedTypesByNode: {},  // keep track of the selected types for each node
       visibleNodes: {},
+      graphContainerTransform: {},
       nodeIdToBeRemoved: null,
     };
   };
@@ -187,6 +188,15 @@ export default class Sandbox extends React.Component {
         nodes: nodes
       }
     });
+  };
+
+  handleD3Transform = (transform) => {
+    this.setState({ 
+      graphContainerTransform: transform,
+      showNodeMenu: false
+    });
+
+    console.log(transform);
   };
 
   
@@ -387,9 +397,17 @@ export default class Sandbox extends React.Component {
     if (!this.hasNodeSelection()) return;
 
     const selectedNode = this.state.selectedNodes[0];
-    let nodeCoords = this.refs.graph.getNodeCoords(selectedNode.id);
+    const nodeCoords = this.refs.graph.getNodeCoords(selectedNode.id);
+    let menuCoords = nodeCoords;
+    
+    // apply transform of the container 
+    const transform = this.state.graphContainerTransform;
+    if (transform.k) {
+      menuCoords.x = nodeCoords.x * transform.k + transform.x;
+      menuCoords.y = nodeCoords.y * transform.k + transform.y; 
+    }
     // account for the menu bar height
-    nodeCoords.y += 100;
+    menuCoords.y += 100;
 
     let connectedTypesByNode = this.state.connectedTypesByNode;
     const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
@@ -401,7 +419,7 @@ export default class Sandbox extends React.Component {
 
     this.setState({ 
       showNodeMenu: true, 
-      nodeMenuCoords: nodeCoords,
+      nodeMenuCoords: menuCoords,
       connectedTypesByNode: connectedTypesByNode
     });
   };
@@ -698,8 +716,12 @@ export default class Sandbox extends React.Component {
     const updatedNodes = this.state.data.nodes.map(n => {
       const hideNode = visibleNodes[n.id] === false;
 
+      // don't touch the other nodes that are not connected to the current one
+      if (!connectedNodes[direction][n.id]) return n;
+
       // nodes that are displayed by default
       if (n.hidden === false && !hideNode) return n;
+
       return Object.assign({}, n, {
         hidden: !visibleNodes[n.id]
       });
@@ -884,6 +906,7 @@ export default class Sandbox extends React.Component {
       hasSelection: this.hasSelection,
       handleNodeDragMove: this.handleNodeDragMove,
       handleSelectionDragMove: this.handleSelectionDragMove,
+      handleD3Transform: this.handleD3Transform,
       // onDoubleClickNode: this.onDoubleClickNode,
       // onRightClickNode: this.onRightClickNode,
       onClickGraph: this.onClickGraph,
@@ -927,7 +950,7 @@ export default class Sandbox extends React.Component {
               </div>
               
               <div className="container__graph-selected col-md-4">
-                <div class="row p-2 heading">
+                <div className="row p-2 heading">
                   <h5>Selected Data</h5>
                 </div>
                 <div className="pt-3">
@@ -959,42 +982,6 @@ export default class Sandbox extends React.Component {
             className="container"
             >
             </div>
-
-          {/*<div className="container__form">
-            <h5>
-              <a href="https://github.com/danielcaldas/react-d3-graph" target="_blank">
-                react-d3-graph
-              </a>
-            </h5>
-            <h5>
-              <a href="https://danielcaldas.github.io/react-d3-graph/docs/index.html" target="_blank">
-                docs
-              </a>
-            </h5>
-            <h3>Configurations</h3>
-            <Form
-              className="form-wrapper"
-              schema={this.state.schema}
-              uiSchema={this.uiSchema}
-              onChange={this.refreshGraph}
-              onSubmit={this.onSubmit}
-            >
-              <button className="invisible-button" type="submit" />
-            </Form>
-            <button className="submit-button btn btn-primary" onClick={this.onClickSubmit}>
-              Generate config
-            </button>
-            <button className="reset-button btn btn-danger" onClick={this.resetGraphConfig}>
-              Reset config
-            </button>
-          </div>
-          <div className="container__graph-config">
-            <h5>Your config</h5>
-            <JSONContainer data={this.state.generatedConfig} staticData={false} />
-          </div>
-          */}
-          
-          
 
           <div className="container__graph-files">
             <h5>Data Files</h5>
