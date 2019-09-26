@@ -20,6 +20,7 @@ import { NodeMenuIngDemo } from "./NodeMenuIngDemo";
 
 import { Dropdown, Button, ButtonToolbar, InputGroup } from "react-bootstrap";
 import { FaRegEyeSlash } from 'react-icons/fa';
+import { MdSearch } from 'react-icons/md';
 
 import uuidv1 from "uuid/v1";
 
@@ -808,6 +809,7 @@ export default class Sandbox extends React.Component {
     return (
       <div>
         <div className="menu-section row p-3">
+          <img src="https://icon-library.net/images/module-icon/module-icon-22.jpg" className="top-logo mr-3" />
           <div className="title-input-container">
             <InputGroup className="">
               <input 
@@ -817,7 +819,7 @@ export default class Sandbox extends React.Component {
                 onChange={this.handleTitleChange}
                 className="form-control" />
               <Button 
-                variant="success"
+                variant="default"
                 onClick={this.onClickSave}>
                 Save
               </Button>
@@ -834,8 +836,8 @@ export default class Sandbox extends React.Component {
                 onChange={this.handleSearchQueryChange}
                 className="form-control" />
               <Button 
-                variant="success">
-                Search
+                variant="primary">
+                <MdSearch size="1.5em" />
               </Button>
             </InputGroup>
           </div>

@@ -170,12 +170,22 @@
     /*background-color: #999;*/
 }
 
+.top-logo {
+    width: 32px;
+}
+
 .title-input-container {
-    width: 500px;
+    width: 452px;
+}
+
+.title-input-container input {
+    border-top: none;
+    border-left: none;
+    border-right: none;
 }
 
 .search-section {
-    background-color: #ccc;
+    background-color: #ddd;
 }
 
 .search-container {
