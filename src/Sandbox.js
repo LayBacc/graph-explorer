@@ -16,6 +16,7 @@ import { AddLinkDropdown } from "./AddLinkDropdown";
 import { CollapseNodeDropdown } from "./CollapseNodeDropdown";
 import { GraphDataFolder } from "./GraphDataFolder";
 import { NodeMenu } from "./NodeMenu";
+import { NodeMenuIngDemo } from "./NodeMenuIngDemo";
 
 import { Dropdown, Button, ButtonToolbar, InputGroup } from "react-bootstrap";
 import { FaRegEyeSlash } from 'react-icons/fa';
@@ -147,6 +148,12 @@ export default class Sandbox extends React.Component {
     });
   };
 
+  onRightClickNode = (nodeId) => {
+    console.log("right click node", nodeId);
+    // this.selectNode(nodeId);
+    // this.setState({ showNodeMenu: true });
+  };
+
   onClickGraph = () => {
     // clear selection
     this.setState({
@@ -195,8 +202,6 @@ export default class Sandbox extends React.Component {
       graphContainerTransform: transform,
       showNodeMenu: false
     });
-
-    console.log(transform);
   };
 
   
@@ -389,6 +394,10 @@ export default class Sandbox extends React.Component {
     this.setState({ ctrlKeyDown: false });
   };
 
+  onGraphRightClick = (e) => {
+    e.preventDefault();
+  };
+
   handleTitleChange = (e) => {
     this.setState({ title: e.target.value });
   };
@@ -408,6 +417,9 @@ export default class Sandbox extends React.Component {
     }
     // account for the menu bar height
     menuCoords.y += 100;
+    // offset 
+    menuCoords.x += 20;
+    menuCoords.y += 20;
 
     let connectedTypesByNode = this.state.connectedTypesByNode;
     const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
@@ -559,7 +571,7 @@ export default class Sandbox extends React.Component {
   // collapse parent nodes of the selected node
   // Use breadth-first search, and mark visited nodes as hidden
   // allow for custom filter conditions 
-  handleCollapseIncomingClick = () => {
+  handleCollapseIncomingClick = (whitelistedNodeTypes) => {
     const collapseByNode = this.state.selectedNodes.length === 1;
     const collapseByLink = this.state.selectedLinks.length === 1;
 
@@ -601,6 +613,9 @@ export default class Sandbox extends React.Component {
 
     // Mark all visited node to hidden
     let nodes = this.state.data.nodes.map(node => {
+      // if node is excluded from collapsing
+      if (whitelistedNodeTypes && whitelistedNodeTypes[node.nodeType] !== true) return node;
+
       if ((collapseByNode && visited[node.id] === true && node.id !== selectedNode.id) || (collapseByLink && visited[node.id] === true) || (collapseByLink && node.id === selectedLink.source)) {
         node.hidden = collapsedState;
       }
@@ -615,7 +630,8 @@ export default class Sandbox extends React.Component {
       data: {
         links: this.state.data.links,
         nodes: nodes
-      }
+      },
+      showNodeMenu: false // TODO - remove this
     })
   };
 
@@ -727,8 +743,6 @@ export default class Sandbox extends React.Component {
       });
     });
 
-    console.log("in handleSelectedNodeTypeChange, updatedNodes: ", updatedNodes, ", visibleNodes: ", visibleNodes);
-
     this.setState({ 
       connectedTypesByNode: connectedTypesByNode,
       visibleNodes: visibleNodes,
@@ -746,6 +760,17 @@ export default class Sandbox extends React.Component {
   };
 
   buildNodeMenu = () => {
+    // hard-coded demo node menu
+    if (this.state.showNodeMenu && this.state.selectedNodes.length === 1 && this.state.selectedNodes[0].nodeType === "Ingredient") {
+      const selectedNode = this.state.selectedNodes[0];
+
+      return <NodeMenuIngDemo 
+        coords={this.state.nodeMenuCoords} 
+        selectedNode={selectedNode}
+        connectedTypesByNode={this.state.connectedTypesByNode}
+        handleSelectedNodeTypeChange={this.handleSelectedNodeTypeChange} 
+        handleDemoShowRecipeClick={this.handleCollapseIncomingClick} />;
+    }
     if (this.state.showNodeMenu && this.state.selectedNodes.length === 1) {
 
       const selectedNode = this.state.selectedNodes[0];
@@ -782,19 +807,39 @@ export default class Sandbox extends React.Component {
 
     return (
       <div>
-        <InputGroup className="mb-3">
-          <input 
-            name="graph_title"
-            value={this.state.title}
-            placeholder="Title"
-            onChange={this.handleTitleChange}
-            className="form-control" />
-          <Button 
-            variant="success"
-            onClick={this.onClickSave}>
-            Save
-          </Button>
-        </InputGroup>
+        <div className="menu-section row p-3">
+          <div className="title-input-container">
+            <InputGroup className="">
+              <input 
+                name="graph_title"
+                value={this.state.title}
+                placeholder="Title"
+                onChange={this.handleTitleChange}
+                className="form-control" />
+              <Button 
+                variant="success"
+                onClick={this.onClickSave}>
+                Save
+              </Button>
+            </InputGroup>
+          </div>
+        </div>
+
+        <div className="search-section row p-3 mb-3">
+          <div className="search-container">
+            <InputGroup className="">
+              <input 
+                name="search"
+                placeholder="Search for any entity/concept"
+                onChange={this.handleSearchQueryChange}
+                className="form-control" />
+              <Button 
+                variant="success">
+                Search
+              </Button>
+            </InputGroup>
+          </div>
+        </div>
 
         <ButtonToolbar className="mb-3">
           <Dropdown>
@@ -825,7 +870,7 @@ export default class Sandbox extends React.Component {
 
           {fullscreen}
           
-          <button onClick={this.handleCollapseIncomingClick}>Collapse</button>
+          {/*<button onClick={this.handleCollapseIncomingClick}>Collapse</button>*/}
 
           <button onClick={this.handleHideNodes}><FaRegEyeSlash /></button>
 
@@ -908,7 +953,7 @@ export default class Sandbox extends React.Component {
       handleSelectionDragMove: this.handleSelectionDragMove,
       handleD3Transform: this.handleD3Transform,
       // onDoubleClickNode: this.onDoubleClickNode,
-      // onRightClickNode: this.onRightClickNode,
+      onRightClickNode: this.onRightClickNode,
       onClickGraph: this.onClickGraph,
       // onClickLink: this.onClickLink,
       // onRightClickLink: this.onRightClickLink,
@@ -942,14 +987,15 @@ export default class Sandbox extends React.Component {
             {this.buildCommonInteractionsPanel()}
             
             <div className="row">
-              <div className="container__graph-area col-md-8"
+              <div className="container__graph-area col-md-10"
                 onKeyDown={this.onGraphKeyDown}
+                onContextMenu={this.onGraphRightClick}
                 onKeyUp={this.onGraphKeyUp}
                 tabIndex="0">
                 <Graph ref="graph" {...graphProps} />
               </div>
               
-              <div className="container__graph-selected col-md-4">
+              <div className="container__graph-selected col-md-2">
                 <div className="row p-2 heading">
                   <h5>Selected Data</h5>
                 </div>
