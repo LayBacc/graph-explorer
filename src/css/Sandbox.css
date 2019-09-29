@@ -149,9 +149,11 @@
 }
 
 .contextmenu-action {
-    width: 64px;
+    width: 84px;
     height: 120px;
     cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .contextmenu-action:hover {
@@ -166,7 +168,7 @@
     width: 100%;
 }
 
-.menu-section {
+.top-header {
     /*background-color: #999;*/
 }
 

@@ -6,6 +6,7 @@ export class NodeMenuIngDemo extends React.Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleShowRecipeClick = this.handleShowRecipeClick.bind(this);
+    this.handleShowConnectedProperties = this.handleShowConnectedProperties.bind(this);
   }
 
   selectedNodeConnectedTypes() {
@@ -81,6 +82,10 @@ export class NodeMenuIngDemo extends React.Component {
     this.props.handleDemoShowRecipeClick({ Ingredient: true, Process: true });
   }
 
+  handleShowConnectedProperties() {
+    this.props.handleDemoShowConnectedProps({ PropertyGroup: true });
+  }
+
   render() {
     const {
       children,
@@ -106,11 +111,19 @@ export class NodeMenuIngDemo extends React.Component {
         <h6>Ingredient Menu</h6>
         
         <div className="contextmenu-action text-center" onClick={this.handleShowRecipeClick}>
-          <div className="contextmenu-action-icon p-2">
+          <div className="contextmenu-action-icon pl-3 pr-3">
             <img src="https://i.pinimg.com/originals/28/1d/3e/281d3e70c4e0d116d9df114505f2a249.png" />
           </div>
           <div></div>
-          Show Recipe
+          Recipe
+        </div>
+
+        <div className="contextmenu-action text-center" onClick={this.handleShowConnectedProperties}>
+          <div className="contextmenu-action-icon pl-3 pr-3">
+            <img src="https://www.shareicon.net/download/2016/10/25/847659_connection_512x512.png" />
+          </div>
+          <div></div>
+          Connected Properties
         </div>
       </div>
     );

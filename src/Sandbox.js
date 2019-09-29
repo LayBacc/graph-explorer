@@ -174,7 +174,8 @@ export default class Sandbox extends React.Component {
       data: {
         links: this.state.data.links,
         nodes: nodes
-      }
+      },
+      showNodeMenu: false
     });
   };
 
@@ -417,7 +418,7 @@ export default class Sandbox extends React.Component {
       menuCoords.y = nodeCoords.y * transform.k + transform.y; 
     }
     // account for the menu bar height
-    menuCoords.y += 100;
+    menuCoords.y += 200;
     // offset 
     menuCoords.x += 20;
     menuCoords.y += 20;
@@ -576,6 +577,7 @@ export default class Sandbox extends React.Component {
     const collapseByNode = this.state.selectedNodes.length === 1;
     const collapseByLink = this.state.selectedLinks.length === 1;
 
+
     if (!collapseByLink && !collapseByNode) return;
 
     let selectedNode = {};
@@ -636,6 +638,74 @@ export default class Sandbox extends React.Component {
     })
   };
 
+  // TODO - refactor duplicate code
+  // reconcile with handleCollapseIncomingClick
+  handleCollapseOutgoing = (whitelistedNodeTypes) => {
+    const collapseByNode = this.state.selectedNodes.length === 1;
+    const collapseByLink = this.state.selectedLinks.length === 1;
+
+    if (!collapseByLink && !collapseByNode) return;
+
+    let selectedNode = {};
+    let selectedLink = {};
+    let collapsedState = true; 
+
+    // BFS implementation
+    let visited = {};
+    let queue = [];
+
+    if (collapseByNode) {
+      selectedNode = this.state.selectedNodes[0];
+      queue.push(selectedNode.id);
+      collapsedState = !selectedNode.collapsed;
+    }
+    else if (collapseByLink) {
+      selectedLink = this.state.selectedLinks[0];
+      queue.push(selectedLink.source);
+    }
+
+    while (queue.length > 0) {
+      let currNodeId = queue.shift();
+      let outgoingLInks = this.state.data.links.filter(link => {
+        return link.source == currNodeId;
+      });
+
+      outgoingLInks.forEach(link => {
+        let targetId = link.target;
+
+        if (visited[targetId] !== true) {
+          queue.push(targetId);
+          visited[targetId] = true;
+        }
+      });
+    };
+
+    console.log("in handleCollapseOutgoing", visited);
+
+    // Mark all visited node to hidden
+    let nodes = this.state.data.nodes.map(node => {
+      // if node is excluded from collapsing
+      if (whitelistedNodeTypes && whitelistedNodeTypes[node.nodeType] !== true) return node;
+
+      if ((collapseByNode && visited[node.id] === true && node.id !== selectedNode.id) || (collapseByLink && visited[node.id] === true) || (collapseByLink && node.id === selectedLink.source)) {
+        node.hidden = collapsedState;
+      }
+      return node;
+    });
+
+    // update collapsed state in graph data
+    const selectedNodeIndex = collapseByNode ? nodes.findIndex(n => n.id == selectedNode.id) : nodes.findIndex(n => n.id == selectedLink.target);
+    nodes[selectedNodeIndex].collapsed = collapsedState;
+
+    this.setState({
+      data: {
+        links: this.state.data.links,
+        nodes: nodes
+      },
+      showNodeMenu: false // TODO - remove this
+    })
+  };
+
   // TODO - implement a way to unhide node?
   handleHideNodes = () => {
     if (this.state.selectedNodes.length < 1) return;
@@ -670,34 +740,6 @@ export default class Sandbox extends React.Component {
       }
     });
   };
-
-  // TODO - remove if not used
-  // updateConnectedNodeVisibility = (direction, nodeLabel, linkLabel, checked) => {
-  //   const selectedNode = this.state.selectedNodes[0];
-  //   const connectedNodes = utils.getConnectedNodes(selectedNode.id, this.state.data.nodes, this.state.data.links);
-
-  //   let visibleNodes = this.state.visibleNodes;
-
-  //   Object.keys(connectedNodes[direction]).forEach(nodeId => {
-  //     const connectedNode = connectedNodes[direction][nodeId];
-  //     const linkTypeSelected = connectedNode.link && connectedNode.link.label === linkLabel;
-  //     const nodeTypeSelected = connectedNode.nodeType === nodeLabel;
-
-  //     if (linkTypeSelected || nodeTypeSelected) {
-  //       visibleNodes[nodeId] = checked;
-  //     }
-  //   });
-
-  //   // update nodes 
-  //   const updatedNodes = this.applyNodeVisibility();
-  //   this.setState({ 
-  //     visibleNodes: visibleNodes,
-  //     data: {
-  //       nodes: updatedNodes,
-  //       links: this.state.data.links
-  //     }
-  //   });
-  // };
 
   handleSelectedNodeTypeChange = (selectedNodeId, direction, linkLabel, nodeLabel, checked) => {
     let connectedTypesByNode = this.state.connectedTypesByNode;
@@ -770,7 +812,8 @@ export default class Sandbox extends React.Component {
         selectedNode={selectedNode}
         connectedTypesByNode={this.state.connectedTypesByNode}
         handleSelectedNodeTypeChange={this.handleSelectedNodeTypeChange} 
-        handleDemoShowRecipeClick={this.handleCollapseIncomingClick} />;
+        handleDemoShowRecipeClick={this.handleCollapseIncomingClick}
+        handleDemoShowConnectedProps={this.handleCollapseOutgoing} />;
     }
     if (this.state.showNodeMenu && this.state.selectedNodes.length === 1) {
 
@@ -780,7 +823,8 @@ export default class Sandbox extends React.Component {
         coords={this.state.nodeMenuCoords} 
         selectedNode={selectedNode}
         connectedTypesByNode={this.state.connectedTypesByNode}
-        handleSelectedNodeTypeChange={this.handleSelectedNodeTypeChange} />;
+        handleSelectedNodeTypeChange={this.handleSelectedNodeTypeChange}
+        handleDemoShowReferences={this.handleCollapseOutgoing} />;
     }
     else {
       return <div></div>;
@@ -808,22 +852,27 @@ export default class Sandbox extends React.Component {
 
     return (
       <div>
-        <div className="menu-section row p-3">
+        <div className="top-header row p-3">
           <img src="https://icon-library.net/images/module-icon/module-icon-22.jpg" className="top-logo mr-3" />
-          <div className="title-input-container">
-            <InputGroup className="">
-              <input 
-                name="graph_title"
-                value={this.state.title}
-                placeholder="Title"
-                onChange={this.handleTitleChange}
-                className="form-control" />
-              <Button 
-                variant="default"
-                onClick={this.onClickSave}>
-                Save
-              </Button>
-            </InputGroup>
+          <div className="menu-container">
+            <div className="title-input-container">
+              <InputGroup className="">
+                <input 
+                  name="graph_title"
+                  value={this.state.title}
+                  placeholder="Title"
+                  onChange={this.handleTitleChange}
+                  className="form-control"
+                  autocomplete="off" />
+                <Button 
+                  variant="default"
+                  onClick={this.onClickSave}>
+                  Save
+                </Button>
+              </InputGroup>
+
+
+            </div>
           </div>
         </div>
 
@@ -834,7 +883,8 @@ export default class Sandbox extends React.Component {
                 name="search"
                 placeholder="Search for any entity/concept"
                 onChange={this.handleSearchQueryChange}
-                className="form-control" />
+                className="form-control"
+                autocomplete="off" />
               <Button 
                 variant="primary">
                 <MdSearch size="1.5em" />

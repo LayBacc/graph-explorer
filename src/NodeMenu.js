@@ -5,7 +5,7 @@ export class NodeMenu extends React.Component {
     super(props, context);
 
     this.handleChange = this.handleChange.bind(this);
-    // this.state = { connectedTypesByNode: {} };
+    this.handleShowReferencesClick = this.handleShowReferencesClick.bind(this);
   }
 
   selectedNodeConnectedTypes() {
@@ -27,6 +27,10 @@ export class NodeMenu extends React.Component {
     const linkLabel = connectedTypeLabel.split("-")[1];
 
     this.props.handleSelectedNodeTypeChange(this.props.selectedNode.id, direction, linkLabel, nodeLabel, checked);
+  }
+
+  handleShowReferencesClick() {
+    this.props.handleDemoShowReferences({ Experiment: true, TastingNote: true }); 
   }
 
   buildConnectedType(direction, label, connectedTypeData) {
@@ -103,14 +107,26 @@ export class NodeMenu extends React.Component {
         backgroundColor: "white",
         padding: "1em"
       }}>
-        <strong><p>Incoming Connections</p></strong>
-        <div className="form-check">
-          {incomingNodeComponents}
+        <h6>Actions</h6>
+        
+        <div className="contextmenu-action text-center" onClick={this.handleShowReferencesClick}>
+          <div className="contextmenu-action-icon pl-3 pr-3">
+            <img src="https://i.pinimg.com/originals/28/1d/3e/281d3e70c4e0d116d9df114505f2a249.png" />
+          </div>
+          <div></div>
+          References
         </div>
 
-        <strong><p>Outgoing Connections</p></strong>
-        <div className="form-check">
-          {outgoingNodeComponents}
+        <div>
+          <strong><p>Incoming Connections</p></strong>
+          <div className="form-check">
+            {incomingNodeComponents}
+          </div>
+
+          <strong><p>Outgoing Connections</p></strong>
+          <div className="form-check">
+            {outgoingNodeComponents}
+          </div>
         </div>
       </div>
     );
