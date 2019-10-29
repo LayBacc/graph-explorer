@@ -109,12 +109,28 @@ export class NodeMenu extends React.Component {
       }}>
         <h6>Actions</h6>
         
-        <div className="contextmenu-action text-center" onClick={this.handleShowReferencesClick}>
+        <div className="contextmenu-action text-center"
+          onClick={this.handleShowReferencesClick}>
           <div className="contextmenu-action-icon pl-3 pr-3">
-            <img src="https://i.pinimg.com/originals/28/1d/3e/281d3e70c4e0d116d9df114505f2a249.png" />
+            <img src="https://www.tsl.texas.gov/sites/default/files/public/tslac/ref/images/librarycatalog.png" />
           </div>
           <div></div>
           References
+        </div>
+        <div className="contextmenu-action text-center">
+          <div className="contextmenu-action-icon pl-3 pr-3">
+            <img src="https://icon-library.net/images/documentation-icon/documentation-icon-17.jpg" />
+          </div>
+          <div></div>
+          Notes & Documents
+        </div>
+
+        <div className="contextmenu-action text-center" onClick={this.handleShowReferencesClick}>
+          <div className="contextmenu-action-icon pl-3 pr-3">
+            <img src="https://static.thenounproject.com/png/433315-200.png" />
+          </div>
+          <div></div>
+          Compute
         </div>
 
         <div>

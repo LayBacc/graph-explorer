@@ -78,6 +78,14 @@ export class AddLinkDropdown extends React.Component {
       <div style={style} className={containerClassName} aria-labelledby={labeledBy}>
         <h4>{ title }</h4>
         <form onSubmit={this.handleSubmit}>
+          <label htmlFor="from">From node</label>
+          <Select
+            name="from"
+            value={this.state.from}
+            onChange={this.handleFromNodeChange}
+            options={this.nodeOptions()}
+          />
+
           <label htmlFor="name">Link name</label>
           <input
              type="text"
@@ -97,14 +105,6 @@ export class AddLinkDropdown extends React.Component {
                       options={this.linkTypeOptions()}
                     />*/
           }
-
-          <label htmlFor="from">From node</label>
-          <Select
-            name="from"
-            value={this.state.from}
-            onChange={this.handleFromNodeChange}
-            options={this.nodeOptions()}
-          />
 
           <label htmlFor="to">To node</label>
           <Select

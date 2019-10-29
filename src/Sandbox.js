@@ -58,6 +58,9 @@ export default class Sandbox extends React.Component {
       width: { "ui:readonly": "true" },
     };
 
+    // Default node types
+    const defaultNodeTypeConfig = {"Concept":{},"Argument":{},"Person":{"svg":"https://image.flaticon.com/icons/png/512/55/55089.png"},"Definition":{},"Observation":{"svg":"https://image.flaticon.com/icons/png/512/51/51300.png"},"Motivation":{},"Challenge":{"svg":"https://static.thenounproject.com/png/1517250-200.png"},"Paper":{"svg":"https://icon-library.net/images/paper-icon-png/paper-icon-png-19.jpg"},"Group":{},"Example":{},"Goal":{"svg":"https://static.thenounproject.com/png/117084-200.png"}};
+
     this.uiSchema = uiSchema;
 
     this.state = {
@@ -73,7 +76,7 @@ export default class Sandbox extends React.Component {
       ctrlKeyDown: false,
       showNodeMenu: false,
       nodeMenuCoords: {},
-      nodeTypeConfig: {},
+      nodeTypeConfig: defaultNodeTypeConfig,
       connectedTypesByNode: {},  // keep track of the selected types for each node
       visibleNodes: {},
       graphContainerTransform: {},
@@ -217,6 +220,8 @@ export default class Sandbox extends React.Component {
   };
 
   onClickSave = () => {
+    // console.log("onClickSave",this.state.nodeTypeConfig);
+
     const reqData = {
       title: this.state.title,
       graph: { 
@@ -397,7 +402,7 @@ export default class Sandbox extends React.Component {
   };
 
   onGraphRightClick = (e) => {
-    e.preventDefault();
+    // e.preventDefault();
   };
 
   handleTitleChange = (e) => {
@@ -994,7 +999,6 @@ export default class Sandbox extends React.Component {
       id: "graph",
       data,
       config: this.state.config,  // TODO - replace the state config with config file - ONE source of truth only
-      // onClickNode: this.onClickNode,
       selectNode: this.selectNode,
       selectedNodes: this.state.selectedNodes,
       selectLink: this.selectLink,
@@ -1004,7 +1008,6 @@ export default class Sandbox extends React.Component {
       handleNodeDragMove: this.handleNodeDragMove,
       handleSelectionDragMove: this.handleSelectionDragMove,
       handleD3Transform: this.handleD3Transform,
-      // onDoubleClickNode: this.onDoubleClickNode,
       onRightClickNode: this.onRightClickNode,
       onClickGraph: this.onClickGraph,
       // onClickLink: this.onClickLink,
