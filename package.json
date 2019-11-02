@@ -22,9 +22,8 @@
     "uuid": "^3.3.3"
   },
   "scripts": {
-    "start": "node-env-run server --exec nodemon | pino-colada", //"react-scripts start",
+    "start": "node-env-run server --exec nodemon | pino-colada",
     "heroku-postbuild": "react-scripts start",
-    
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
