@@ -23,7 +23,8 @@
   },
   "scripts": {
     "start": "node-env-run server --exec nodemon | pino-colada",
-    "heroku-postbuild": "react-scripts start",
+    "client": "react-scripts start",
+    "heroku-postbuild": "npm run client",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -31,7 +32,6 @@
     "dev": "run-p server start",
     "postinstall": "patch-package"
   },
-  // "proxy": "http://localhost:5000",
   "eslintConfig": {
     "extends": "react-app"
   },
