@@ -836,6 +836,59 @@ export default class Sandbox extends React.Component {
     }
   };
 
+  buildTopMenu = () => {
+    return(
+      <div>
+        <div className="top-header row pl-3">
+          <div className="top-logo-container mt-1 mb-1 pt-2 pb-2">
+            <img src="https://icon-library.net/images/module-icon/module-icon-22.jpg" className="top-logo" />
+          </div>
+          <div className="menu-container">
+            <div className="title-input-container pt-1 pl-2">
+              <InputGroup className="">
+                <input 
+                  name="graph_title"
+                  value={this.state.title}
+                  placeholder="Title"
+                  onChange={this.handleTitleChange}
+                  className="form-control pl-0"
+                  autocomplete="off" />
+                <Button 
+                  variant="default"
+                  onClick={this.onClickSave}>
+                  Save
+                </Button>
+              </InputGroup>
+            </div>
+            <div className="top-menu-bar pt-1 pb-1">
+              <span className="menu-control">File</span>
+              <span className="menu-control">Edit</span>
+              <span className="menu-control">View</span>
+              <span className="menu-control">Insert</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="search-section row pl-3 pt-1 pb-1">
+          <div className="search-container">
+            <InputGroup className="">
+              <input 
+                name="search"
+                placeholder="Search for any entity/concept"
+                onChange={this.handleSearchQueryChange}
+                className="form-control"
+                autocomplete="off" />
+              <Button 
+                variant="default">
+                <MdSearch size="1.5em" />
+              </Button>
+            </InputGroup>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   /**
    * Build common piece of the interface that contains some interactions such as
    * fullscreen, play/pause, + and - buttons.
@@ -857,47 +910,6 @@ export default class Sandbox extends React.Component {
 
     return (
       <div>
-        <div className="top-header row p-3">
-          <img src="https://icon-library.net/images/module-icon/module-icon-22.jpg" className="top-logo mr-3" />
-          <div className="menu-container">
-            <div className="title-input-container">
-              <InputGroup className="">
-                <input 
-                  name="graph_title"
-                  value={this.state.title}
-                  placeholder="Title"
-                  onChange={this.handleTitleChange}
-                  className="form-control"
-                  autocomplete="off" />
-                <Button 
-                  variant="default"
-                  onClick={this.onClickSave}>
-                  Save
-                </Button>
-              </InputGroup>
-
-
-            </div>
-          </div>
-        </div>
-
-        <div className="search-section row p-3 mb-3">
-          <div className="search-container">
-            <InputGroup className="">
-              <input 
-                name="search"
-                placeholder="Search for any entity/concept"
-                onChange={this.handleSearchQueryChange}
-                className="form-control"
-                autocomplete="off" />
-              <Button 
-                variant="primary">
-                <MdSearch size="1.5em" />
-              </Button>
-            </InputGroup>
-          </div>
-        </div>
-
         <ButtonToolbar className="mb-3">
           <Dropdown>
             <Dropdown.Toggle variant="primary" id="dropdown-basic">
@@ -1039,7 +1051,7 @@ export default class Sandbox extends React.Component {
       return (
         <div>
           <div className="container__graph container-fluid m-0">
-            {this.buildCommonInteractionsPanel()}
+            {this.buildTopMenu()} 
             
             <div className="row">
               <div className="container__graph-area col-md-10"
@@ -1074,6 +1086,8 @@ export default class Sandbox extends React.Component {
                 </div>
               </div>
             </div>
+
+            {this.buildCommonInteractionsPanel()}
 
             <span className="container__graph-info">
               Nodes: {this.state.data.nodes.length} | Links: {this.state.data.links.length}

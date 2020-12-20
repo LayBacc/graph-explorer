@@ -173,7 +173,7 @@
 }
 
 .top-logo {
-    width: 32px;
+    width: 40px;
 }
 
 .title-input-container {
@@ -181,15 +181,34 @@
 }
 
 .title-input-container input {
+    /*border-top: none;
+    border-left: none;
+    border-right: none;*/
+    border: none;
+}
+
+.search-section {
+    /*background-color: #ddd;*/
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+}
+
+.search-container {
+    width: 500px;
+}
+
+.search-container input {
     border-top: none;
     border-left: none;
     border-right: none;
 }
 
-.search-section {
-    background-color: #ddd;
+.top-menu-bar {
+    font-size: 0.9em;
 }
 
-.search-container {
-    width: 500px;
+.top-menu-bar .menu-control {
+    cursor: pointer;
+    padding-left: .5rem;
+    padding-right: .5rem;
 }

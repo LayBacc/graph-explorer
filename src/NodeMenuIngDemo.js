@@ -120,7 +120,7 @@ export class NodeMenuIngDemo extends React.Component {
 
         <div className="contextmenu-action text-center" onClick={this.handleShowConnectedProperties}>
           <div className="contextmenu-action-icon pl-3 pr-3">
-            <img src="https://www.shareicon.net/download/2016/10/25/847659_connection_512x512.png" />
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKCvVrgKvGh9aUwvUYXdokXAsjok5_IUN_BZQ4bL-yx69dvm9nIQ&s" />
           </div>
           <div></div>
           Connected Properties
